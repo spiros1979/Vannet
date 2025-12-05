@@ -387,7 +387,7 @@
             return 'Καιρικά φαινόμενα';
         }
 
-        // Widget καιρού με geolocation + Open-Meteo
+        // Widget καιρού με geolocation + Open-Meteo + reverse geocoding
         function initWeatherWidget() {
             const statusEl   = document.getElementById('weatherStatus');
             const locEl      = document.getElementById('weatherLocation');
@@ -395,12 +395,13 @@
 
             if (!navigator.geolocation) {
                 statusEl.textContent = 'Ο browser δεν υποστηρίζει γεωεντοπισμό.';
-                locEl.textContent = 'Χωρίς τοποθεσία';
+                locEl.textContent = 'Περιοχή: άγνωστη';
                 linkEl.href = 'https://www.windy.com/';
                 return;
             }
 
             statusEl.textContent = 'Εντοπισμός τοποθεσίας...';
+            locEl.textContent = 'Αναζήτηση περιοχής...';
 
             navigator.geolocation.getCurrentPosition(
                 position => {
@@ -411,9 +412,37 @@
                     const windyUrl = `https://www.windy.com/?${lat.toFixed(3)},${lon.toFixed(3)}`;
                     linkEl.href = windyUrl;
 
-                    locEl.textContent = 'Πρόγνωση για τις επόμενες 3 μέρες';
+                    // ---- Reverse geocoding για όνομα περιοχής (OpenStreetMap / Nominatim) ----
+                    const revUrl =
+                        `https://nominatim.openstreetmap.org/reverse` +
+                        `?lat=${lat}&lon=${lon}&format=json&accept-language=el`;
 
-                    // Κλήση στο Open-Meteo
+                    fetch(revUrl)
+                        .then(r => r.json())
+                        .then(place => {
+                            const addr = place.address || {};
+                            const parts = [];
+
+                            if (addr.suburb)       parts.push(addr.suburb);
+                            else if (addr.village) parts.push(addr.village);
+                            else if (addr.town)    parts.push(addr.town);
+                            else if (addr.city)    parts.push(addr.city);
+
+                            if (addr.state)   parts.push(addr.state);
+                            if (addr.country) parts.push(addr.country);
+
+                            if (parts.length > 0) {
+                                locEl.textContent = 'Περιοχή: ' + parts.join(', ');
+                            } else {
+                                locEl.textContent = 'Περιοχή: άγνωστη';
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Σφάλμα στο reverse geocoding:', err);
+                            locEl.textContent = 'Περιοχή: άγνωστη';
+                        });
+
+                    // ---- Πρόγνωση από Open-Meteo ----
                     const apiUrl =
                         `https://api.open-meteo.com/v1/forecast` +
                         `?latitude=${lat}&longitude=${lon}` +
@@ -461,7 +490,7 @@
                 error => {
                     console.warn('Σφάλμα geolocation:', error);
                     statusEl.textContent = 'Δεν δόθηκε άδεια για τοποθεσία.';
-                    locEl.textContent = 'Χωρίς τοποθεσία';
+                    locEl.textContent = 'Περιοχή: άγνωστη';
                     linkEl.href = 'https://www.windy.com/';
                 },
                 { timeout: 10000 }
@@ -692,510 +721,3 @@
     </script>
 </body>
 </html>
-<!DOCTYPE html>
-<html lang="el">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Πίνακας BME680 - UNO R4 WiFi</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            background-color: rgb(238, 238, 237);
-            color: #241e1d;
-        }
-        /* Banner */
-        .banner {
-            background-color: rgb(188, 173, 175);
-            padding: 20px 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #dee2e6;
-            width: 100%;
-            color: #241e1d;
-        }
-
-        .banner-title {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        /* Εικονίδια πλοήγησης */
-        .nav-item img {
-            width: 24px;
-            height: 24px;
-            display: inline-block;
-            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-        }
-
-        /* Contenitore grafico */
-        .chart-container {
-            position: relative;
-            height: 400px;
-            width: 100%;
-        }
-
-        /* Πλοήγηση */
-        nav {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .nav-item {
-            margin-left: 20px;
-            display: inline-block;
-            vertical-align: middle;
-            text-align: center;
-        }
-
-        @media (max-width: 576px) {
-            nav {
-                justify-content: center;
-            }
-            .nav-item {
-                margin-left: 10px;
-                margin-bottom: 10px;
-            }
-        }
-
-        /* Κουτάκια μετρήσεων */
-        .counter {
-            margin: 20px 0;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .counter h3 {
-            font-size: 25px;
-            margin-bottom: 13px;
-        }
-
-        .counter p {
-            font-size: 30px;
-            margin: 0;
-        }
-
-        .counter-details {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #555;
-        }
-
-        .counter-details span {
-            display: inline-block;
-        }
-
-		/* Μπάρα IAQ με παστέλ χρώματα */
-		.iaq-bar {
-			position: relative;
-			height: 20px;
-			width: 100%;
-			background: linear-gradient(to right, 
-				#80F280 0%,    /* Πράσινο - πολύ καλό */
-				#80F280 20%, 
-				#FFFF80 40%,   /* Κίτρινο */
-				#FFBF80 60%,   /* Πορτοκαλί */
-				#FF8080 80%,   /* Κόκκινο */
-				#BF8091 100%   /* Σκούρο κόκκινο */
-			);
-			margin-top: 40px;
-			margin-bottom: 20px;
-			border-radius: 10px;
-		}
-
-        /* Δείκτης IAQ (τριγωνάκι) */
-        .iaq-indicator {
-            position: absolute;
-            top: -12px;
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 10px solid #000;
-            border-bottom: none;
-        }
-
-		/* Τιμή IAQ */
-        #iaqValue {
-            font-size: 25px;
-            margin: 0;
-            font-weight: normal;
-            color: #241e1d;
-        }
-
-        /* Λεκτική περιγραφή ποιότητας αέρα */
-        #iaqQuality {
-            font-size: 20px;
-            margin: 0;
-            font-weight: normal;
-			color: #241e1d;
-        }
-		
-        /* Footer */
-        footer {
-            margin-top: 50px;
-            padding: 10px 0;
-            text-align: center;
-            font-size: 12px;
-            color: #241e1d;
-        }
-
-        footer img {
-            margin: 0 10px;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-        }
-    </style>
-</head>
-<body>
-    <div class="banner">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-6">
-                    <div class="banner-title">Dashboard BME680 - UNO R4 WiFi</div>
-                    <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
-                </div>
-                <div class="col-6 text-right">
-                    <nav>
-                        <a class="nav-item" href="charts.html">
-                            <img src="thermometer.svg" alt="Γραφήματα" title="Γραφήματα θερμοκρασίας">
-                        </a>
-                        <a class="nav-item" href="humcharts.html">
-                            <img src="drop-half-bottom.svg" alt="Γραφήματα" title="Γραφήματα υγρασίας">
-                        </a>
-                        <a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Γραφήματα" title="Γραφήματα ατμοσφαιρικής πίεσης">
-                        </a>
-                        <a class="nav-item" href="aircharts.html">
-                            <img src="fan.svg" alt="Γραφήματα" title="Γραφήματα ποιότητας αέρα">
-                        </a>
-                        <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="Πληροφορίες" title="Σχετικά με τη σελίδα">
-                        </a>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="row">
-            <!-- Υγρασία -->
-            <div class="col-md-4">
-                <div class="counter">
-                    <h3>Υγρασία</h3>
-                    <canvas id="humidityChart"></canvas>
-                    <p id="humidity">--%</p>
-                    <div class="counter-details">
-                        <span id="humidity-min">Ελάχιστο: --%</span>
-                        <span id="humidity-avg">Μ. όρος: --%</span>
-                        <span id="humidity-max">Μέγιστο: --%</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Θερμοκρασία -->
-            <div class="col-md-4">
-                <div class="counter">
-                    <h3>Θερμοκρασία</h3>
-                    <canvas id="temperatureChart"></canvas>
-                    <p id="temperature">--°C</p>
-                    <div class="counter-details">
-                        <span id="temperature-min">Ελάχιστο: --°C</span>
-                        <span id="temperature-avg">Μ. όρος: --°C</span>
-                        <span id="temperature-max">Μέγιστο: --°C</span>
-                    </div>
-                </div>
-            </div>
-            <!-- Πίεση -->
-            <div class="col-md-4">
-                <div class="counter">
-                    <h3>Πίεση</h3>
-                    <canvas id="pressureChart"></canvas>
-                    <p id="pressure">-- hPa</p>
-                    <div class="counter-details">
-                        <span id="pressure-min">Ελάχιστο: -- hPa</span>
-                        <span id="pressure-avg">Μ. όρος: -- hPa</span>
-                        <span id="pressure-max">Μέγιστο: -- hPa</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Ποιότητα Αέρα (AIQ) -->
-        <div class="row">
-            <div class="col-md-4">
-                <div class="counter">
-                    <h3>Ποιότητα Αέρα (AIQ)</h3>
-                    <div id="iaqBar" class="iaq-bar">
-                        <div id="iaqIndicator" class="iaq-indicator"></div>
-                    </div>
-                    <p id="iaqValue">--</p>
-                    <p id="iaqQuality">--</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <footer>
-        <p>Σχετικά με εμένα</p>
-        <a href="https://github.com/GarauGarau"><img src="github-logo.svg" alt="GitHub Logo"></a>
-        <a href="https://x.com/alessiogarau22"><img src="x-logo.svg" alt="X (Twitter) Logo"></a>
-        <a href="https://alessiogarau.me"><img src="user.svg" alt="Personal Website"></a>
-    </footer>
-
-    <script>
-        // Βοηθητική συνάρτηση: μετατρέπει "dd/MM/yyyy HH:mm:ss" σε αντικείμενο Date
-        function parseDateString(dateString) {
-            if (!dateString) return new Date(NaN);
-            const [datePart, timePart] = dateString.split(' ');
-            const [day, month, year] = datePart.split('/').map(Number);
-            let [hours, minutes, seconds] = [0, 0, 0];
-            if (timePart) {
-                [hours, minutes, seconds] = timePart.split(':').map(Number);
-            }
-            return new Date(year, month - 1, day, hours, minutes, seconds);
-        }
-
-        // Helper: min / max / avg με έλεγχο
-        function calcStats(arr) {
-            if (!arr || arr.length === 0) {
-                return { min: NaN, max: NaN, avg: NaN };
-            }
-            const min = Math.min(...arr);
-            const max = Math.max(...arr);
-            const avg = arr.reduce((sum, v) => sum + v, 0) / arr.length;
-            return { min, max, avg };
-        }
-
-        // Helper για εμφάνιση τιμών σε κουτιά (αν δεν έχει τιμή → "--")
-        function formatStat(value, unit) {
-            return Number.isFinite(value) ? `${value.toFixed(1)}${unit}` : `--${unit}`;
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            // Διαβάζουμε τα δεδομένα από το Google Apps Script (mode=read)
-            fetch('https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read')
-                .then(response => response.json())
-                .then(data => {
-                    // ΠΙΝΑΚΕΣ με αριθμητικές τιμές, φιλτράρουμε μόνο έγκυρες
-                    const humidityValues = data
-                        .map(item => Number(item['Umidità']))
-                        .filter(v => !isNaN(v));
-                    const temperatureValues = data
-                        .map(item => Number(item['Temperatura']))
-                        .filter(v => !isNaN(v));
-                    const pressureValues = data
-                        .map(item => Number(item['Pressione']))
-                        .filter(v => !isNaN(v));
-
-                    // Στατιστικά
-                    const humStats  = calcStats(humidityValues);
-                    const tempStats = calcStats(temperatureValues);
-                    const pressStats= calcStats(pressureValues);
-
-                    // Τελευταία γραμμή δεδομένων (τελευταία μέτρηση από το JSON)
-                    const lastRow = data[data.length - 1] || {};
-
-                    const lastHum  = Number(lastRow['Umidità']);
-                    const lastTemp = Number(lastRow['Temperatura']);
-                    const lastPress= Number(lastRow['Pressione']);
-
-                    // Ενημέρωση κύριων τιμών (αν δεν είναι αριθμός, βάζουμε "--")
-                    document.getElementById('humidity').textContent =
-                        Number.isFinite(lastHum) ? `${lastHum.toFixed(1)}%` : '--%';
-                    document.getElementById('temperature').textContent =
-                        Number.isFinite(lastTemp) ? `${lastTemp.toFixed(1)}°C` : '--°C';
-                    document.getElementById('pressure').textContent =
-                        Number.isFinite(lastPress) ? `${lastPress.toFixed(1)} hPa` : '-- hPa';
-
-                    // Ενημέρωση min / avg / max με formatStat
-                    document.getElementById('humidity-min').textContent =
-                        `Ελάχιστο: ${formatStat(humStats.min, '%')}`;
-                    document.getElementById('humidity-avg').textContent =
-                        `Μ. όρος: ${formatStat(humStats.avg, '%')}`;
-                    document.getElementById('humidity-max').textContent =
-                        `Μέγιστο: ${formatStat(humStats.max, '%')}`;
-
-                    document.getElementById('temperature-min').textContent =
-                        `Ελάχιστο: ${formatStat(tempStats.min, '°C')}`;
-                    document.getElementById('temperature-avg').textContent =
-                        `Μ. όρος: ${formatStat(tempStats.avg, '°C')}`;
-                    document.getElementById('temperature-max').textContent =
-                        `Μέγιστο: ${formatStat(tempStats.max, '°C')}`;
-
-                    document.getElementById('pressure-min').textContent =
-                        `Ελάχιστο: ${formatStat(pressStats.min, ' hPa')}`;
-                    document.getElementById('pressure-avg').textContent =
-                        `Μ. όρος: ${formatStat(pressStats.avg, ' hPa')}`;
-                    document.getElementById('pressure-max').textContent =
-                        `Μέγιστο: ${formatStat(pressStats.max, ' hPa')}`;
-
-                    // Τελευταία ενημέρωση (από το timestamp του φύλλου)
-                    if (lastRow['Data']) {
-                        const date = parseDateString(lastRow['Data']);
-                        const formattedDate = date.toLocaleDateString('el-GR');
-                        const formattedTime = date.toLocaleTimeString('el-GR');
-                        document.getElementById('last-update').textContent =
-                            `Τελευταία ενημέρωση: ${formattedDate} ${formattedTime}`;
-                    }
-
-                    // Τιμή AIQ από το πεδίο aiq (0–100)
-                    const iaqValue = Number(lastRow['aiq'] || 0);
-                    updateIAQ(iaqValue);
-
-                    // Τελευταία 10 δείγματα για μίνι γραφήματα
-                    const recentHumidityValues    = humidityValues.slice(-10);
-                    const recentTemperatureValues = temperatureValues.slice(-10);
-                    const recentPressureValues    = pressureValues.slice(-10);
-                    const labels = Array(recentHumidityValues.length).fill('');
-
-                    // Γράφημα υγρασίας
-                    const humidityChart = new Chart(
-                        document.getElementById('humidityChart').getContext('2d'),
-                        {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    data: recentHumidityValues,
-                                    fill: false,
-                                    borderColor: '#549256',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    x: { display: false },
-                                    y: {
-                                        display: true,
-                                        min: recentHumidityValues.length
-                                            ? Math.min(...recentHumidityValues) - 1
-                                            : 0,
-                                        max: recentHumidityValues.length
-                                            ? Math.max(...recentHumidityValues) + 1
-                                            : 100
-                                    }
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: { enabled: false }
-                                }
-                            }
-                        }
-                    );
-
-                    // Γράφημα θερμοκρασίας
-                    const temperatureChart = new Chart(
-                        document.getElementById('temperatureChart').getContext('2d'),
-                        {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    data: recentTemperatureValues,
-                                    fill: false,
-                                    borderColor: '#e75d56',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    x: { display: false },
-                                    y: {
-                                        display: true,
-                                        min: recentTemperatureValues.length
-                                            ? Math.min(...recentTemperatureValues) - 1
-                                            : 0,
-                                        max: recentTemperatureValues.length
-                                            ? Math.max(...recentTemperatureValues) + 1
-                                            : 50
-                                    }
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: { enabled: false }
-                                }
-                            }
-                        }
-                    );
-
-                    // Γράφημα πίεσης
-                    const pressureChart = new Chart(
-                        document.getElementById('pressureChart').getContext('2d'),
-                        {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    data: recentPressureValues,
-                                    fill: false,
-                                    borderColor: '#eac861',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    x: { display: false },
-                                    y: {
-                                        display: true,
-                                        min: recentPressureValues.length
-                                            ? Math.min(...recentPressureValues) - 1
-                                            : 900,
-                                        max: recentPressureValues.length
-                                            ? Math.max(...recentPressureValues) + 1
-                                            : 1100
-                                    }
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: { enabled: false }
-                                }
-                            }
-                        }
-                    );
-                })
-                .catch(error => console.error('Σφάλμα κατά την ανάκτηση των δεδομένων:', error));
-        });
-
-        // Ενημέρωση μπάρας IAQ (0–100) και κειμένων
-        function updateIAQ(iaqValue) {
-            const iaqIndicator = document.getElementById('iaqIndicator');
-            const iaqQuality   = document.getElementById('iaqQuality');
-            const iaqValueText = document.getElementById('iaqValue');
-
-            // Εμφάνιση αριθμητικής τιμής
-            iaqValueText.textContent = `AIQ: ${iaqValue.toFixed(0)}`;
-
-            // Λεκτική αξιολόγηση ποιότητας αέρα (0–100)
-            let qualityText = '';
-            if (iaqValue <= 20) {
-                qualityText = 'Άριστη ποιότητα αέρα';
-            } else if (iaqValue <= 40) {
-                qualityText = 'Καλή ποιότητα αέρα';
-            } else if (iaqValue <= 60) {
-                qualityText = 'Μέτρια ποιότητα αέρα';
-            } else if (iaqValue <= 80) {
-                qualityText = 'Κακή ποιότητα αέρα';
-            } else {
-                qualityText = 'Πολύ κακή ποιότητα αέρα';
-            }
-
-            iaqQuality.textContent = qualityText;
-
-            // Θέση δείκτη πάνω στη μπάρα (0–100%)
-            const percentage = Math.min(Math.max(iaqValue, 0), 100);
-            iaqIndicator.style.left = `calc(${percentage}% - 1px)`;
-        }
-    </script>
-</body>
-</html>
-
