@@ -4,7 +4,7 @@ This repository contains the Arduino code and web components for a project that 
 How It Works
 Data Collection
 
-# The ESP32 microcontroller reads data from Bosch sensors.
+# The Uno R4 reads data from Bosch sensors (Pirimoni BME680).
 Supported measurements include:
    - Humidity
    - Temperature
