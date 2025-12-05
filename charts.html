@@ -1,90 +1,89 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="el">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grafici - Dashboard Temperatura</title>
+    <title>Γραφήματα Θερμοκρασίας - Dashboard</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-		body {
-			background-color: rgb(238, 238, 237);
-			color: #241e1d;
-		}
+    <style>
+        body {
+            background-color: rgb(238, 238, 237);
+            color: #241e1d;
+        }
 
-		/* Banner */
-		.banner {
-			background-color: rgb(188, 173, 175);
-			padding: 20px 10px;
-			margin-bottom: 20px;
-			border-bottom: 2px solid #dee2e6;
-			width: 100%;
-			color: #241e1d;
-		}
+        /* Banner */
+        .banner {
+            background-color: rgb(188, 173, 175);
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+            width: 100%;
+            color: #241e1d;
+        }
 
-		.banner-title {
-			font-size: 24px;
-			font-weight: bold;
-		}
+        .banner-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-		/* Icone di navigazione */
-		.nav-item img {
-			width: 24px;
-			height: 24px;
-			display: inline-block;
-			filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-		}
+        /* Εικονίδια πλοήγησης */
+        .nav-item img {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+        }
 
-		/* Contenitore grafico */
-		.chart-container {
-			position: relative;
-			height: 400px;
-			width: 100%;
-		}
+        /* Contenitore grafico */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
 
-		/* Navigazione */
-		nav {
-			display: flex;
-			justify-content: flex-end;
-			align-items: center;
-			flex-wrap: wrap; /* Consente il wrapping solo quando necessario */
-		}
+        /* Πλοήγηση */
+        nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap; /* επιτρέπει wrap μόνο όταν χρειάζεται */
+        }
 
-		.nav-item {
-			margin-left: 20px;
-			display: inline-block;
-			vertical-align: middle;
-			text-align: center;
-		}
+        .nav-item {
+            margin-left: 20px;
+            display: inline-block;
+            vertical-align: middle;
+            text-align: center;
+        }
 
-		/* Media query per schermi piccoli */
-		@media (max-width: 576px) {
-			nav {
-				justify-content: center; /* Centra le icone in modalità mobile */
-			}
-			.nav-item {
-				margin-left: 10px; /* Riduce il margine per adattarsi meglio */
-				margin-bottom: 10px; /* Aggiunge spazio verticale tra le righe */
-			}
-		}
+        /* Media query για μικρές οθόνες */
+        @media (max-width: 576px) {
+            nav {
+                justify-content: center; /* κεντράρει τα εικονίδια στο mobile */
+            }
+            .nav-item {
+                margin-left: 10px;
+                margin-bottom: 10px;
+            }
+        }
 
-		/* Footer */
-		footer {
-			margin-top: 50px;
-			padding: 10px 0;
-			text-align: center;
-			font-size: 12px;
-			color: #241e1d;
-		}
+        /* Footer */
+        footer {
+            margin-top: 50px;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 12px;
+            color: #241e1d;
+        }
 
-		footer img {
-			margin: 0 10px;
-			width: 24px;
-			height: 24px;
-			cursor: pointer;
-			filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-		}
-
+        footer img {
+            margin: 0 10px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+        }
     </style>
 </head>
 
@@ -94,28 +93,28 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-6">
-                    <div class="banner-title">Dashboard Temperatura</div>
-                    <div class="banner-date" id="last-update">Ultimo aggiornamento: --/--/---- --:--:--</div>
+                    <div class="banner-title">Γραφήματα Θερμοκρασίας</div>
+                    <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
                 </div>
                 <div class="col-6 text-right">
                     <nav>
                         <a class="nav-item" href="#" id="update-data">
-                            <img src="arrows-counter-clockwise.svg" alt="Aggiorna" title="Aggiorna Dati">
+                            <img src="arrows-counter-clockwise.svg" alt="Ανανέωση" title="Ανανέωση δεδομένων">
                         </a>
                         <a class="nav-item" href="index.html">
-                            <img src="speedometer.svg" alt="Home" title="Dashboard">
+                            <img src="speedometer.svg" alt="Αρχική" title="Κεντρικός Πίνακας">
                         </a>
                         <a class="nav-item" href="humcharts.html">
-                            <img src="drop-half-bottom.svg" alt="Grafici" title="Grafici umidità">
+                            <img src="drop-half-bottom.svg" alt="Γραφήματα Υγρασίας" title="Γραφήματα υγρασίας">
                         </a>
-						<a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Grafici" title="Grafici pressione barometrica">
+                        <a class="nav-item" href="presscharts.html">
+                            <img src="cloud-sun.svg" alt="Γραφήματα Πίεσης" title="Γραφήματα ατμοσφαιρικής πίεσης">
                         </a>
-						<a class="nav-item" href="aircharts.html">
-                            <img src="fan.svg" alt="Grafici" title="Grafici qualità aria">
+                        <a class="nav-item" href="aircharts.html">
+                            <img src="fan.svg" alt="Γραφήματα Ποιότητας Αέρα" title="Γραφήματα ποιότητας αέρα">
                         </a>
                         <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="About This Site">
+                            <img src="info.svg" alt="Πληροφορίες" title="Σχετικά με τη σελίδα">
                         </a>
                     </nav>
                 </div>
@@ -123,30 +122,33 @@
         </div>
     </div>
 
+    <!-- Περιεχόμενο -->
     <div class="container-fluid">
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <h4 id="latest-temp">Ultima temperatura rilevata: -- °C</h4>
+                <h4 id="latest-temp">Τελευταία θερμοκρασία: -- °C</h4>
             </div>
         </div>
         <div class="row mb-4">
             <div class="col-12 text-center">
                 <select id="timeFilter" class="form-control w-35 mx-auto">
-                    <option value="all">Tutti i dati</option>
-                    <option value="last24h">24h</option>
-                    <option value="last12h">12h</option>
-                    <option value="last6h">6h</option>
-                    <option value="last3h">3h</option>
-					<option value="last1h">1h</option>
+                    <option value="all">Όλα τα δεδομένα</option>
+                    <option value="last24h">Τελευταίες 24 ώρες</option>
+                    <option value="last12h">Τελευταίες 12 ώρες</option>
+                    <option value="last6h">Τελευταίες 6 ώρες</option>
+                    <option value="last3h">Τελευταίες 3 ώρες</option>
+                    <option value="last1h">Τελευταία 1 ώρα</option>
                 </select>
             </div>
         </div>
         <div class="row">
+            <!-- Γράφημα λεπτό-λεπτό -->
             <div class="col-12">
                 <div class="chart-container">
                     <canvas id="minutoChart"></canvas>
                 </div>
             </div>
+            <!-- Γράφημα μέσης ωριαίας θερμοκρασίας -->
             <div class="col-12 mt-4">
                 <div class="chart-container">
                     <canvas id="oraChart"></canvas>
@@ -156,13 +158,13 @@
     </div>
 
     <footer>
-        <p>About me</p>
+        <p>Σχετικά με εμένα</p>
         <a href="https://github.com/GarauGarau"><img src="github-logo.svg" alt="GitHub Logo"></a>
         <a href="https://x.com/alessiogarau22"><img src="x-logo.svg" alt="X (Twitter) Logo"></a>
-        <a href="https://alessiogarau.io"><img src="user.svg" alt="Personal Website"></a>
+        <a href="https://alessiogarau.io"><img src="user.svg" alt="Προσωπική Ιστοσελίδα"></a>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- Δεν χρειάζεται πλέον PapaParse, τα δεδομένα έρχονται ήδη σε JSON -->
     <script src="app.js"></script>
 </body>
 </html>
