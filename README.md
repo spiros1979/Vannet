@@ -12,7 +12,7 @@ Supported measurements include:
 
 # Data Transmission
 
-The ESP32 sends the sensor data to a Google Apps Script Web App endpoint.
+The R4 sends the sensor data to a Google Apps Script Web App endpoint.
 The web app processes the incoming data and appends it to a Google Sheet, effectively creating a real-time database.
 
 # Data Visualization
