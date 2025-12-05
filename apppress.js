@@ -1,36 +1,27 @@
-// Όταν πατηθεί το κουμπί "Ανανέωση δεδομένων"
+// Όταν πατηθεί το κουμπί "Ανανέωση" (εικονίδιο με τα βελάκια)
 document.getElementById('update-data').addEventListener('click', function() {
     loadDataAndUpdateCharts();
 });
 
-// Φόρτωση δεδομένων από Apps Script (JSON) και ενημέρωση γραφημάτων
+// Κύρια συνάρτηση: διαβάζει δεδομένα από το Apps Script και ενημερώνει τα γραφήματα πίεσης
 function loadDataAndUpdateCharts() {
-
-    // TODO: Αργότερα θα αλλάξουμε αυτό το URL με το δικό σου Apps Script (JSON για πίεση)
-    const url = 'https://script.google.com/macros/s/AKfycbxd1U-hm2xo79srYB-o9AdgHBBCKOrbaL4fFzdJlXbzhpV08Sq8Tua6qk_5Q78cJWFZ/exec'; 
+    // URL του Google Apps Script σε mode=read (JSON για τα γραφήματα)
+    const url = 'https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read';
 
     fetch(url)
         .then(response => response.json())
         .then(data => {
             processAndDisplayData(data);
         })
-        .catch(error => console.error('Σφάλμα κατά το fetch των δεδομένων (πίεση):', error));
+        .catch(error => console.error('Σφάλμα κατά το fetch των δεδομένων:', error));
 }
 
-// Μετατροπή string ημερομηνίας σε αντικείμενο Date
+// Βοηθητική συνάρτηση: μετατρέπει string "dd/MM/yyyy HH:mm:ss" σε Date
 function parseDateString(dateString) {
-    // Πρώτα χωρίζουμε με κόμμα (αν υπάρχει)
-    let [datePart, timePart] = dateString.split(', ');
+    let [datePart, timePart] = dateString.split(' ');
 
-    // Αν δεν βρεθεί κόμμα, δοκιμάζουμε με κενό
-    if (!timePart) {
-        [datePart, timePart] = dateString.split(' ');
-    }
-
-    // Ημερομηνία σε μορφή ΗΗ/ΜΜ/ΕΕΕΕ
     const [day, month, year] = datePart.split('/').map(Number);
 
-    // Ώρα σε μορφή ΩΩ:ΛΛ:ΔΔ (αν λείπει, βάζουμε 0)
     let [hours, minutes, seconds] = [0, 0, 0];
     if (timePart) {
         [hours, minutes, seconds] = timePart.split(':').map(Number);
@@ -39,106 +30,108 @@ function parseDateString(dateString) {
     return new Date(year, month - 1, day, hours, minutes, seconds);
 }
 
-// Κύρια επεξεργασία δεδομένων + ενημέρωση HTML + προετοιμασία για Chart.js
+// Επεξεργασία δεδομένων και ενημέρωση κειμένων + γραφημάτων πίεσης
 function processAndDisplayData(data) {
-    // Προ-επεξεργασία δεδομένων
+    // 1) Προεπεξεργασία δεδομένων (τύποι, ημερομηνία κλπ.)
     const processedData = data.map(row => {
-        let pressione = row.Pressione;  // ΠΕΔΙΟ "Pressione" από το JSON (μην το αλλάξεις εδώ)
+        let pressione = row.Pressione;
 
+        // Μετατροπή σε float αν είναι string (με κόμμα ή τελεία)
         if (typeof pressione === 'string') {
             pressione = parseFloat(pressione.replace(',', '.'));
         } else if (typeof pressione !== 'number') {
-            console.error('Το πεδίο Pressione δεν βρέθηκε ή δεν είναι έγκυρο:', row);
-            pressione = NaN;  // Σημάδεψε ως μη έγκυρο
+            console.error('Πεδίο Pressione δεν είναι έγκυρο:', row);
+            pressione = NaN;
         }
 
-        // Μετατροπή ημερομηνίας από το πεδίο Data
-        const parsedDate = new Date(row.Data);
+        // Μετατροπή ημερομηνίας
+        const parsedDate = parseDateString(row.Data);
         if (isNaN(parsedDate.getTime())) {
             console.error('Μη έγκυρη ημερομηνία:', row.Data);
         }
 
         return {
             ...row,
-            Data: parsedDate,
+            Data: parsedDate,   // Date object
             Pressione: pressione
         };
     });
 
-    // Έλεγχος αν υπάρχουν έγκυρες τιμές πίεσης
+    // 2) Αν όλες οι πιέσεις είναι NaN, σταματάμε
     if (processedData.every(row => isNaN(row.Pressione))) {
         console.error('Όλες οι τιμές πίεσης είναι μη έγκυρες.');
+        document.getElementById('latest-temp').textContent = 'Δεν υπάρχουν διαθέσιμα δεδομένα.';
         return;
     }
 
-    // Φιλτράρισμα δεδομένων με βάση το επιλεγμένο χρονικό φίλτρο
+    // 3) Φιλτράρισμα ανάλογα με το φίλτρο χρόνου (1h, 3h, 6h, 12h, 24h, όλα)
     const timeFilter = document.getElementById('timeFilter').value;
     const filteredDataMinuto = filterDataByTime(processedData, timeFilter);
-    
+
     if (filteredDataMinuto.length === 0) {
         console.error('Δεν υπάρχουν δεδομένα μετά το φιλτράρισμα.');
         document.getElementById('latest-temp').textContent = 'Δεν υπάρχουν διαθέσιμα δεδομένα.';
         return;
     }
 
-    // Τελευταία μέτρηση πίεσης (πιο πρόσφατη)
+    // 4) Τελευταία πίεση
     const latestPress = filteredDataMinuto[filteredDataMinuto.length - 1].Pressione;
     document.getElementById('latest-temp').textContent =
         `Τελευταία πίεση: ${latestPress.toFixed(2)} hPa`;
 
-    // Τελευταία ώρα ενημέρωσης (τώρα)
+    // 5) Τελευταία ενημέρωση (ώρα συστήματος)
     const lastUpdateTime = new Date().toLocaleString('el-GR', { hour12: false });
     document.getElementById('last-update').textContent =
         `Τελευταία ενημέρωση: ${lastUpdateTime}`;
 
-    // Δεδομένα για 1ο γράφημα (πίεση ανά λεπτό)
-    const labelsMinuto = filteredDataMinuto.map(row => row.Data.toLocaleString('el-GR'));
+    // 6) Δεδομένα για 1ο γράφημα (ανά δείγμα)
+    const labelsMinuto = filteredDataMinuto.map(
+        row => row.Data.toLocaleString('el-GR', { hour12: false })
+    );
     const dataMinuto = filteredDataMinuto.map(row => row.Pressione);
 
-    // Δεδομένα για 2ο γράφημα (μέση πίεση ανά ώρα + confidence intervals)
+    // 7) Δεδομένα για 2ο γράφημα (ωριαίος μέσος όρος με CI)
     const hourlyData = aggregateHourly(filteredDataMinuto);
     const labelsOra = hourlyData.map(row => row.label);
-    const dataOra = hourlyData.map(row => row.meanTemp);
-    const ciUpper = hourlyData.map(row => row.ciUpper);
-    const ciLower = hourlyData.map(row => row.ciLower);
+    const dataOra   = hourlyData.map(row => row.meanPress);
+    const ciUpper   = hourlyData.map(row => row.ciUpper);
+    const ciLower   = hourlyData.map(row => row.ciLower);
 
-    // Ενημέρωση γραφημάτων
+    // 8) Ενημέρωση γραφημάτων
     updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower);
 }
 
-// Φιλτράρισμα δεδομένων με βάση χρονικό παράθυρο
+// Φιλτράρει δεδομένα με βάση το φίλτρο χρόνου
 function filterDataByTime(data, filter) {
     const lastTimestamp = data[data.length - 1].Data.getTime();
 
     let timeFrame = 0;
     switch (filter) {
         case 'last24h':
-            timeFrame = 24 * 60 * 60 * 1000; // 24 ώρες
+            timeFrame = 24 * 60 * 60 * 1000;
             break;
         case 'last12h':
-            timeFrame = 12 * 60 * 60 * 1000; // 12 ώρες
+            timeFrame = 12 * 60 * 60 * 1000;
             break;
         case 'last6h':
-            timeFrame = 6 * 60 * 60 * 1000;  // 6 ώρες
+            timeFrame = 6 * 60 * 60 * 1000;
             break;
         case 'last3h':
-            timeFrame = 3 * 60 * 60 * 1000;  // 3 ώρες
+            timeFrame = 3 * 60 * 60 * 1000;
             break;
         case 'last1h':
-            timeFrame = 1 * 60 * 60 * 1000;  // 1 ώρα
+            timeFrame = 1 * 60 * 60 * 1000;
             break;
         default:
-            return data; // Όλα τα δεδομένα
+            return data; // "all"
     }
 
-    const filteredData = data.filter(row =>
-        row.Data.getTime() >= (lastTimestamp - timeFrame)
-    );
-    console.log(`Φιλτραρισμένα δεδομένα (${filter}):`, filteredData);
+    const filteredData = data.filter(row => row.Data.getTime() >= (lastTimestamp - timeFrame));
+    console.log(`Δεδομένα πίεσης μετά το φιλτράρισμα (${filter}):`, filteredData);
     return filteredData;
 }
 
-// Ομαδοποίηση ανά ώρα + μέση πίεση + 95% διάστημα εμπιστοσύνης
+// Ομαδοποίηση ανά ώρα + υπολογισμός μέσου όρου πίεσης και 95% CI
 function aggregateHourly(data) {
     const grouped = data.reduce((acc, curr) => {
         const hour = curr.Data.getHours();
@@ -155,31 +148,29 @@ function aggregateHourly(data) {
 
     return Object.keys(grouped).map(key => {
         const values = grouped[key];
-        const meanTemp = values.reduce((a, b) => a + b, 0) / values.length;
+        const meanPress = values.reduce((a, b) => a + b, 0) / values.length;
 
-        // Τυπικό σφάλμα
-        const stdErr = Math.sqrt(
-            values.reduce((sum, val) => sum + Math.pow(val - meanTemp, 2), 0) /
-            (values.length - 1)
-        ) / Math.sqrt(values.length);
-
+        let stdErr = 0;
+        if (values.length > 1) {
+            const variance = values.reduce((sum, val) => sum + Math.pow(val - meanPress, 2), 0) / (values.length - 1);
+            stdErr = Math.sqrt(variance) / Math.sqrt(values.length);
+        }
         const ci95 = 1.96 * stdErr;
 
         return {
             label: key,
-            meanTemp,
-            ciUpper: meanTemp + ci95,
-            ciLower: meanTemp - ci95
+            meanPress,
+            ciUpper: meanPress + ci95,
+            ciLower: meanPress - ci95
         };
     });
 }
 
-// Δημιουργία / ενημέρωση των 2 γραφημάτων πίεσης
+// Δημιουργία / ενημέρωση των δύο γραφημάτων (πίεση ανά δείγμα & μέση πίεση ανά ώρα)
 function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower) {
     const minutoCtx = document.getElementById('minutoChart').getContext('2d');
-    const oraCtx = document.getElementById('oraChart').getContext('2d');
+    const oraCtx    = document.getElementById('oraChart').getContext('2d');
 
-    // Καταστροφή παλιών charts (αν υπάρχουν)
     if (window.minutoChart && typeof window.minutoChart.destroy === 'function') {
         window.minutoChart.destroy();
     }
@@ -188,7 +179,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
         window.oraChart.destroy();
     }
 
-    // -------- 1ο γράφημα: Πίεση ανά λεπτό --------
+    // 1ο γράφημα: πίεση ανά δείγμα
     try {
         window.minutoChart = new Chart(minutoCtx, {
             type: 'line',
@@ -208,7 +199,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false // Απόκρυψη legend
+                        display: false
                     }
                 },
                 scales: {
@@ -216,16 +207,108 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                         display: true,
                         title: { display: true, text: '' },
                         ticks: {
-                            callback: function(value, index, ticks) {
-                                // Εμφάνιση ετικέτας κάθε 10 σημεία
+                            callback: function(value, index) {
                                 if (index % 10 === 0) {
-                                    const date = parseDateString(labelsMinuto[value]);
-                                    if (!isNaN(date.getTime())) {
-                                        return date.toLocaleDateString('el-GR');
-                                    } else {
-                                        console.error('Σφάλμα στη μετατροπή ημερομηνίας:', labelsMinuto[value]);
-                                        return '';
-                                    }
+                                    const label = labelsMinuto[value];
+                                    const parts = label.split(',');
+                                    return parts[0] || label;
                                 } else {
-                                    return ''; 
+                                    return '';
                                 }
+                            }
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: { display: true, text: 'Πίεση (hPa)' }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Σφάλμα κατά τη δημιουργία του γραφήματος πίεσης λεπτό-λεπτό:', error);
+    }
+
+    // 2ο γράφημα: μέση πίεση ανά ώρα με 95% CI
+    try {
+        window.oraChart = new Chart(oraCtx, {
+            type: 'line',
+            data: {
+                labels: labelsOra,
+                datasets: [
+                    {
+                        label: 'Μέση πίεση ανά ώρα',
+                        data: dataOra,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '95% CI',
+                        data: ciUpper,
+                        borderColor: 'rgba(255, 159, 64, 0.2)',
+                        fill: '-1',
+                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                        borderWidth: 1,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '95% CI',
+                        data: ciLower,
+                        borderColor: 'rgba(255, 159, 64, 0.2)',
+                        fill: '-1',
+                        backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                        borderWidth: 1,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: { display: true, text: '' },
+                        ticks: {
+                            callback: function(value, index) {
+                                if (index % 2 === 0) {
+                                    const dateLabel = labelsOra[value];
+                                    const [datePart] = dateLabel.split(' ');
+                                    return datePart || dateLabel;
+                                } else {
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: { display: true, text: 'Πίεση (hPa)' }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Σφάλμα κατά τη δημιουργία του γραφήματος μέσης πίεσης:', error);
+    }
+}
+
+// Όταν φορτώσει η σελίδα πίεσης, φορτώνουμε δεδομένα και δένουμε τα events
+document.addEventListener('DOMContentLoaded', function() {
+    loadDataAndUpdateCharts();
+
+    document.getElementById('update-data').addEventListener('click', function() {
+        loadDataAndUpdateCharts();
+    });
+
+    document.getElementById('timeFilter').addEventListener('change', function() {
+        loadDataAndUpdateCharts();
+    });
+});
