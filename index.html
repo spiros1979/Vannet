@@ -271,53 +271,79 @@
             return new Date(year, month - 1, day, hours, minutes, seconds);
         }
 
+        // Helper: min / max / avg με έλεγχο
+        function calcStats(arr) {
+            if (!arr || arr.length === 0) {
+                return { min: NaN, max: NaN, avg: NaN };
+            }
+            const min = Math.min(...arr);
+            const max = Math.max(...arr);
+            const avg = arr.reduce((sum, v) => sum + v, 0) / arr.length;
+            return { min, max, avg };
+        }
+
+        // Helper για εμφάνιση τιμών σε κουτιά (αν δεν έχει τιμή → "--")
+        function formatStat(value, unit) {
+            return Number.isFinite(value) ? `${value.toFixed(1)}${unit}` : `--${unit}`;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // Διαβάζουμε τα δεδομένα από το Google Apps Script (mode=read)
             fetch('https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read')
                 .then(response => response.json())
                 .then(data => {
-                    // ΠΙΝΑΚΕΣ με αριθμητικές τιμές (Number)
-                    const humidityValues = data.map(item => Number(item['Umidità']));
-                    const temperatureValues = data.map(item => Number(item['Temperatura']));
-                    const pressureValues   = data.map(item => Number(item['Pressione']));
+                    // ΠΙΝΑΚΕΣ με αριθμητικές τιμές, φιλτράρουμε μόνο έγκυρες
+                    const humidityValues = data
+                        .map(item => Number(item['Umidità']))
+                        .filter(v => !isNaN(v));
+                    const temperatureValues = data
+                        .map(item => Number(item['Temperatura']))
+                        .filter(v => !isNaN(v));
+                    const pressureValues = data
+                        .map(item => Number(item['Pressione']))
+                        .filter(v => !isNaN(v));
 
-                    // Υπολογισμός ελάχιστης, μέγιστης, μέσης τιμής
-                    const humidityMin = Math.min(...humidityValues).toFixed(1);
-                    const humidityMax = Math.max(...humidityValues).toFixed(1);
-                    const humidityAvg = (humidityValues.reduce((sum, val) => sum + val, 0) / humidityValues.length).toFixed(1);
+                    // Στατιστικά
+                    const humStats  = calcStats(humidityValues);
+                    const tempStats = calcStats(temperatureValues);
+                    const pressStats= calcStats(pressureValues);
 
-                    const temperatureMin = Math.min(...temperatureValues).toFixed(1);
-                    const temperatureMax = Math.max(...temperatureValues).toFixed(1);
-                    const temperatureAvg = (temperatureValues.reduce((sum, val) => sum + val, 0) / temperatureValues.length).toFixed(1);
-
-                    const pressureMin = Math.min(...pressureValues).toFixed(1);
-                    const pressureMax = Math.max(...pressureValues).toFixed(1);
-                    const pressureAvg = (pressureValues.reduce((sum, val) => sum + val, 0) / pressureValues.length).toFixed(1);
-
-                    // Τελευταία γραμμή δεδομένων (τελευταία μέτρηση)
-                    const lastRow = data[data.length - 1];
+                    // Τελευταία γραμμή δεδομένων (τελευταία μέτρηση από το JSON)
+                    const lastRow = data[data.length - 1] || {};
 
                     const lastHum  = Number(lastRow['Umidità']);
                     const lastTemp = Number(lastRow['Temperatura']);
                     const lastPress= Number(lastRow['Pressione']);
 
-                    // Ενημέρωση κύριων τιμών
-                    document.getElementById('humidity').textContent    = `${lastHum.toFixed(1)}%`;
-                    document.getElementById('temperature').textContent = `${lastTemp.toFixed(1)}°C`;
-                    document.getElementById('pressure').textContent    = `${lastPress.toFixed(1)} hPa`;
+                    // Ενημέρωση κύριων τιμών (αν δεν είναι αριθμός, βάζουμε "--")
+                    document.getElementById('humidity').textContent =
+                        Number.isFinite(lastHum) ? `${lastHum.toFixed(1)}%` : '--%';
+                    document.getElementById('temperature').textContent =
+                        Number.isFinite(lastTemp) ? `${lastTemp.toFixed(1)}°C` : '--°C';
+                    document.getElementById('pressure').textContent =
+                        Number.isFinite(lastPress) ? `${lastPress.toFixed(1)} hPa` : '-- hPa';
 
-                    // Ενημέρωση min / avg / max
-                    document.getElementById('humidity-min').textContent = `Ελάχιστο: ${humidityMin}%`;
-                    document.getElementById('humidity-avg').textContent = `Μ. όρος: ${humidityAvg}%`;
-                    document.getElementById('humidity-max').textContent = `Μέγιστο: ${humidityMax}%`;
+                    // Ενημέρωση min / avg / max με formatStat
+                    document.getElementById('humidity-min').textContent =
+                        `Ελάχιστο: ${formatStat(humStats.min, '%')}`;
+                    document.getElementById('humidity-avg').textContent =
+                        `Μ. όρος: ${formatStat(humStats.avg, '%')}`;
+                    document.getElementById('humidity-max').textContent =
+                        `Μέγιστο: ${formatStat(humStats.max, '%')}`;
 
-                    document.getElementById('temperature-min').textContent = `Ελάχιστο: ${temperatureMin}°C`;
-                    document.getElementById('temperature-avg').textContent = `Μ. όρος: ${temperatureAvg}°C`;
-                    document.getElementById('temperature-max').textContent = `Μέγιστο: ${temperatureMax}°C`;
+                    document.getElementById('temperature-min').textContent =
+                        `Ελάχιστο: ${formatStat(tempStats.min, '°C')}`;
+                    document.getElementById('temperature-avg').textContent =
+                        `Μ. όρος: ${formatStat(tempStats.avg, '°C')}`;
+                    document.getElementById('temperature-max').textContent =
+                        `Μέγιστο: ${formatStat(tempStats.max, '°C')}`;
 
-                    document.getElementById('pressure-min').textContent = `Ελάχιστο: ${pressureMin} hPa`;
-                    document.getElementById('pressure-avg').textContent = `Μ. όρος: ${pressureAvg} hPa`;
-                    document.getElementById('pressure-max').textContent = `Μέγιστο: ${pressureMax} hPa`;
+                    document.getElementById('pressure-min').textContent =
+                        `Ελάχιστο: ${formatStat(pressStats.min, ' hPa')}`;
+                    document.getElementById('pressure-avg').textContent =
+                        `Μ. όρος: ${formatStat(pressStats.avg, ' hPa')}`;
+                    document.getElementById('pressure-max').textContent =
+                        `Μέγιστο: ${formatStat(pressStats.max, ' hPa')}`;
 
                     // Τελευταία ενημέρωση (από το timestamp του φύλλου)
                     if (lastRow['Data']) {
@@ -339,98 +365,118 @@
                     const labels = Array(recentHumidityValues.length).fill('');
 
                     // Γράφημα υγρασίας
-                    const humidityChart = new Chart(document.getElementById('humidityChart').getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                data: recentHumidityValues,
-                                fill: false,
-                                borderColor: '#549256',
-                                tension: 0.1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                x: { display: false },
-                                y: {
-                                    display: true,
-                                    min: Math.min(...recentHumidityValues) - 1,
-                                    max: Math.max(...recentHumidityValues) + 1
-                                }
+                    const humidityChart = new Chart(
+                        document.getElementById('humidityChart').getContext('2d'),
+                        {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: recentHumidityValues,
+                                    fill: false,
+                                    borderColor: '#549256',
+                                    tension: 0.1
+                                }]
                             },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { enabled: false }
+                            options: {
+                                scales: {
+                                    x: { display: false },
+                                    y: {
+                                        display: true,
+                                        min: recentHumidityValues.length
+                                            ? Math.min(...recentHumidityValues) - 1
+                                            : 0,
+                                        max: recentHumidityValues.length
+                                            ? Math.max(...recentHumidityValues) + 1
+                                            : 100
+                                    }
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: { enabled: false }
+                                }
                             }
                         }
-                    });
+                    );
 
                     // Γράφημα θερμοκρασίας
-                    const temperatureChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                data: recentTemperatureValues,
-                                fill: false,
-                                borderColor: '#e75d56',
-                                tension: 0.1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                x: { display: false },
-                                y: {
-                                    display: true,
-                                    min: Math.min(...recentTemperatureValues) - 1,
-                                    max: Math.max(...recentTemperatureValues) + 1
-                                }
+                    const temperatureChart = new Chart(
+                        document.getElementById('temperatureChart').getContext('2d'),
+                        {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: recentTemperatureValues,
+                                    fill: false,
+                                    borderColor: '#e75d56',
+                                    tension: 0.1
+                                }]
                             },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { enabled: false }
+                            options: {
+                                scales: {
+                                    x: { display: false },
+                                    y: {
+                                        display: true,
+                                        min: recentTemperatureValues.length
+                                            ? Math.min(...recentTemperatureValues) - 1
+                                            : 0,
+                                        max: recentTemperatureValues.length
+                                            ? Math.max(...recentTemperatureValues) + 1
+                                            : 50
+                                    }
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: { enabled: false }
+                                }
                             }
                         }
-                    });
+                    );
 
                     // Γράφημα πίεσης
-                    const pressureChart = new Chart(document.getElementById('pressureChart').getContext('2d'), {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                data: recentPressureValues,
-                                fill: false,
-                                borderColor: '#eac861',
-                                tension: 0.1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                x: { display: false },
-                                y: {
-                                    display: true,
-                                    min: Math.min(...recentPressureValues) - 1,
-                                    max: Math.max(...recentPressureValues) + 1
-                                }
+                    const pressureChart = new Chart(
+                        document.getElementById('pressureChart').getContext('2d'),
+                        {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: recentPressureValues,
+                                    fill: false,
+                                    borderColor: '#eac861',
+                                    tension: 0.1
+                                }]
                             },
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { enabled: false }
+                            options: {
+                                scales: {
+                                    x: { display: false },
+                                    y: {
+                                        display: true,
+                                        min: recentPressureValues.length
+                                            ? Math.min(...recentPressureValues) - 1
+                                            : 900,
+                                        max: recentPressureValues.length
+                                            ? Math.max(...recentPressureValues) + 1
+                                            : 1100
+                                    }
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: { enabled: false }
+                                }
                             }
                         }
-                    });
+                    );
                 })
                 .catch(error => console.error('Σφάλμα κατά την ανάκτηση των δεδομένων:', error));
         });
 
         // Ενημέρωση μπάρας IAQ (0–100) και κειμένων
         function updateIAQ(iaqValue) {
-            const iaqBar      = document.getElementById('iaqBar');
-            const iaqIndicator= document.getElementById('iaqIndicator');
-            const iaqQuality  = document.getElementById('iaqQuality');
-            const iaqValueText= document.getElementById('iaqValue');
+            const iaqIndicator = document.getElementById('iaqIndicator');
+            const iaqQuality   = document.getElementById('iaqQuality');
+            const iaqValueText = document.getElementById('iaqValue');
 
             // Εμφάνιση αριθμητικής τιμής
             iaqValueText.textContent = `AIQ: ${iaqValue.toFixed(0)}`;
