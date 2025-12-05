@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="el">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard BMP680 - ESP32</title>
+    <title>Πίνακας BME680 - UNO R4 WiFi</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -26,7 +26,7 @@
             font-weight: bold;
         }
 
-        /* Icone di navigazione */
+        /* Εικονίδια πλοήγησης */
         .nav-item img {
             width: 24px;
             height: 24px;
@@ -41,7 +41,7 @@
             width: 100%;
         }
 
-        /* Navigazione */
+        /* Πλοήγηση */
         nav {
             display: flex;
             justify-content: flex-end;
@@ -66,7 +66,7 @@
             }
         }
 
-        /* Contatore */
+        /* Κουτάκια μετρήσεων */
         .counter {
             margin: 20px 0;
             padding: 10px;
@@ -98,30 +98,28 @@
             display: inline-block;
         }
 
-		/* IAQ Bar with Pastel Colors */
+		/* Μπάρα IAQ με παστέλ χρώματα */
 		.iaq-bar {
 			position: relative;
 			height: 20px;
 			width: 100%;
 			background: linear-gradient(to right, 
-				#80F280 0%,    /* Pastel Green */
-				#80F280 10%, 
-				#FFFF80 20%,   /* Pastel Yellow */
-				#FFBF80 40%,   /* Pastel Orange */
-				#FF8080 60%,   /* Pastel Red */
-				#CC80A6 80%,   /* Pastel Purple */
-				#BF8091 100%   /* Pastel Dark Red */
+				#80F280 0%,    /* Πράσινο - πολύ καλό */
+				#80F280 20%, 
+				#FFFF80 40%,   /* Κίτρινο */
+				#FFBF80 60%,   /* Πορτοκαλί */
+				#FF8080 80%,   /* Κόκκινο */
+				#BF8091 100%   /* Σκούρο κόκκινο */
 			);
 			margin-top: 40px;
 			margin-bottom: 20px;
 			border-radius: 10px;
 		}
 
-
-        /* Indicatore IAQ */
+        /* Δείκτης IAQ (τριγωνάκι) */
         .iaq-indicator {
             position: absolute;
-            top: -12px;  /* Posiziona l'indicatore sopra la barra */
+            top: -12px;
             width: 0;
             height: 0;
             border-left: 10px solid transparent;
@@ -130,17 +128,17 @@
             border-bottom: none;
         }
 
-		/* Stile per il valore IAQ */
+		/* Τιμή IAQ */
         #iaqValue {
-            font-size: 25px;  /* Dimensione del font maggiore */
+            font-size: 25px;
             margin: 0;
             font-weight: normal;
             color: #241e1d;
         }
 
-        /* Stile per la qualità dell'aria */
+        /* Λεκτική περιγραφή ποιότητας αέρα */
         #iaqQuality {
-            font-size: 20px;  /* Dimensione del font */
+            font-size: 20px;
             margin: 0;
             font-weight: normal;
 			color: #241e1d;
@@ -169,25 +167,25 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-6">
-                    <div class="banner-title">Dashboard BME680 - ESP32</div>
-                    <div class="banner-date" id="last-update">Ultimo aggiornamento: --/--/---- --:--:--</div>
+                    <div class="banner-title">Dashboard BME680 - UNO R4 WiFi</div>
+                    <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
                 </div>
                 <div class="col-6 text-right">
                     <nav>
                         <a class="nav-item" href="charts.html">
-                            <img src="thermometer.svg" alt="Grafici" title="Grafici temperatura">
+                            <img src="thermometer.svg" alt="Γραφήματα" title="Γραφήματα θερμοκρασίας">
                         </a>
                         <a class="nav-item" href="humcharts.html">
-                            <img src="drop-half-bottom.svg" alt="Grafici" title="Grafici umidità">
+                            <img src="drop-half-bottom.svg" alt="Γραφήματα" title="Γραφήματα υγρασίας">
                         </a>
                         <a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Grafici" title="Grafici pressione barometrica">
+                            <img src="cloud-sun.svg" alt="Γραφήματα" title="Γραφήματα ατμοσφαιρικής πίεσης">
                         </a>
                         <a class="nav-item" href="aircharts.html">
-                            <img src="fan.svg" alt="Grafici" title="Grafici qualità aria">
+                            <img src="fan.svg" alt="Γραφήματα" title="Γραφήματα ποιότητας αέρα">
                         </a>
                         <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="About This Site">
+                            <img src="info.svg" alt="Πληροφορίες" title="Σχετικά με τη σελίδα">
                         </a>
                     </nav>
                 </div>
@@ -197,49 +195,52 @@
 
     <div class="container">
         <div class="row">
+            <!-- Υγρασία -->
             <div class="col-md-4">
                 <div class="counter">
-                    <h3>Umidità</h3>
+                    <h3>Υγρασία</h3>
                     <canvas id="humidityChart"></canvas>
                     <p id="humidity">--%</p>
                     <div class="counter-details">
-                        <span id="humidity-min">Min: --%</span>
-                        <span id="humidity-avg">Avg: --%</span>
-                        <span id="humidity-max">Max: --%</span>
+                        <span id="humidity-min">Ελάχιστο: --%</span>
+                        <span id="humidity-avg">Μ. όρος: --%</span>
+                        <span id="humidity-max">Μέγιστο: --%</span>
                     </div>
                 </div>
             </div>
+            <!-- Θερμοκρασία -->
             <div class="col-md-4">
                 <div class="counter">
-                    <h3>Temperatura</h3>
+                    <h3>Θερμοκρασία</h3>
                     <canvas id="temperatureChart"></canvas>
                     <p id="temperature">--°C</p>
                     <div class="counter-details">
-                        <span id="temperature-min">Min: --°C</span>
-                        <span id="temperature-avg">Avg: --°C</span>
-                        <span id="temperature-max">Max: --°C</span>
+                        <span id="temperature-min">Ελάχιστο: --°C</span>
+                        <span id="temperature-avg">Μ. όρος: --°C</span>
+                        <span id="temperature-max">Μέγιστο: --°C</span>
                     </div>
                 </div>
             </div>
+            <!-- Πίεση -->
             <div class="col-md-4">
                 <div class="counter">
-                    <h3>Pressione</h3>
+                    <h3>Πίεση</h3>
                     <canvas id="pressureChart"></canvas>
                     <p id="pressure">-- hPa</p>
                     <div class="counter-details">
-                        <span id="pressure-min">Min: -- hPa</span>
-                        <span id="pressure-avg">Avg: -- hPa</span>
-                        <span id="pressure-max">Max: -- hPa</span>
+                        <span id="pressure-min">Ελάχιστο: -- hPa</span>
+                        <span id="pressure-avg">Μ. όρος: -- hPa</span>
+                        <span id="pressure-max">Μέγιστο: -- hPa</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Box Qualità dell'Aria (IAQ) -->
+        <!-- Ποιότητα Αέρα (AIQ) -->
         <div class="row">
             <div class="col-md-4">
                 <div class="counter">
-                    <h3>Qualità dell'Aria (IAQ)</h3>
+                    <h3>Ποιότητα Αέρα (AIQ)</h3>
                     <div id="iaqBar" class="iaq-bar">
                         <div id="iaqIndicator" class="iaq-indicator"></div>
                     </div>
@@ -251,74 +252,93 @@
     </div>
 
     <footer>
-        <p>About me</p>
+        <p>Σχετικά με εμένα</p>
         <a href="https://github.com/GarauGarau"><img src="github-logo.svg" alt="GitHub Logo"></a>
         <a href="https://x.com/alessiogarau22"><img src="x-logo.svg" alt="X (Twitter) Logo"></a>
         <a href="https://alessiogarau.me"><img src="user.svg" alt="Personal Website"></a>
     </footer>
 
     <script>
+        // Βοηθητική συνάρτηση: μετατρέπει "dd/MM/yyyy HH:mm:ss" σε αντικείμενο Date
+        function parseDateString(dateString) {
+            if (!dateString) return new Date(NaN);
+            const [datePart, timePart] = dateString.split(' ');
+            const [day, month, year] = datePart.split('/').map(Number);
+            let [hours, minutes, seconds] = [0, 0, 0];
+            if (timePart) {
+                [hours, minutes, seconds] = timePart.split(':').map(Number);
+            }
+            return new Date(year, month - 1, day, hours, minutes, seconds);
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
-            fetch('https://script.google.com/macros/s/AKfycbxd1U-hm2xo79srYB-o9AdgHBBCKOrbaL4fFzdJlXbzhpV08Sq8Tua6qk_5Q78cJWFZ/exec')
+            // Διαβάζουμε τα δεδομένα από το Google Apps Script (mode=read)
+            fetch('https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read')
                 .then(response => response.json())
                 .then(data => {
-                    // Calcola i valori min, max e media per umidità
-                    const humidityValues = data.map(item => item['Umidità']);
+                    // ΠΙΝΑΚΕΣ με αριθμητικές τιμές (Number)
+                    const humidityValues = data.map(item => Number(item['Umidità']));
+                    const temperatureValues = data.map(item => Number(item['Temperatura']));
+                    const pressureValues   = data.map(item => Number(item['Pressione']));
+
+                    // Υπολογισμός ελάχιστης, μέγιστης, μέσης τιμής
                     const humidityMin = Math.min(...humidityValues).toFixed(1);
                     const humidityMax = Math.max(...humidityValues).toFixed(1);
                     const humidityAvg = (humidityValues.reduce((sum, val) => sum + val, 0) / humidityValues.length).toFixed(1);
 
-                    // Calcola i valori min, max e media per temperatura
-                    const temperatureValues = data.map(item => item['Temperatura']);
                     const temperatureMin = Math.min(...temperatureValues).toFixed(1);
                     const temperatureMax = Math.max(...temperatureValues).toFixed(1);
                     const temperatureAvg = (temperatureValues.reduce((sum, val) => sum + val, 0) / temperatureValues.length).toFixed(1);
 
-                    // Calcola i valori min, max e media per pressione
-                    const pressureValues = data.map(item => item['Pressione']);
                     const pressureMin = Math.min(...pressureValues).toFixed(1);
                     const pressureMax = Math.max(...pressureValues).toFixed(1);
                     const pressureAvg = (pressureValues.reduce((sum, val) => sum + val, 0) / pressureValues.length).toFixed(1);
 
-                    // Prendi l'ultima riga dei dati
+                    // Τελευταία γραμμή δεδομένων (τελευταία μέτρηση)
                     const lastRow = data[data.length - 1];
 
-                    // Aggiorna i contatori principali con l'ultimo valore
-                    document.getElementById('humidity').textContent = `${(lastRow['Umidità']).toFixed(1)}%`;
-                    document.getElementById('temperature').textContent = `${lastRow['Temperatura'].toFixed(1)}°C`;
-                    document.getElementById('pressure').textContent = `${lastRow['Pressione'].toFixed(1)} hPa`;
+                    const lastHum  = Number(lastRow['Umidità']);
+                    const lastTemp = Number(lastRow['Temperatura']);
+                    const lastPress= Number(lastRow['Pressione']);
 
-                    // Aggiorna i valori min, avg, max
-                    document.getElementById('humidity-min').textContent = `Min: ${humidityMin}%`;
-                    document.getElementById('humidity-avg').textContent = `Avg: ${humidityAvg}%`;
-                    document.getElementById('humidity-max').textContent = `Max: ${humidityMax}%`;
+                    // Ενημέρωση κύριων τιμών
+                    document.getElementById('humidity').textContent    = `${lastHum.toFixed(1)}%`;
+                    document.getElementById('temperature').textContent = `${lastTemp.toFixed(1)}°C`;
+                    document.getElementById('pressure').textContent    = `${lastPress.toFixed(1)} hPa`;
 
-                    document.getElementById('temperature-min').textContent = `Min: ${temperatureMin}°C`;
-                    document.getElementById('temperature-avg').textContent = `Avg: ${temperatureAvg}°C`;
-                    document.getElementById('temperature-max').textContent = `Max: ${temperatureMax}°C`;
+                    // Ενημέρωση min / avg / max
+                    document.getElementById('humidity-min').textContent = `Ελάχιστο: ${humidityMin}%`;
+                    document.getElementById('humidity-avg').textContent = `Μ. όρος: ${humidityAvg}%`;
+                    document.getElementById('humidity-max').textContent = `Μέγιστο: ${humidityMax}%`;
 
-                    document.getElementById('pressure-min').textContent = `Min: ${pressureMin} hPa`;
-                    document.getElementById('pressure-avg').textContent = `Avg: ${pressureAvg} hPa`;
-                    document.getElementById('pressure-max').textContent = `Max: ${pressureMax} hPa`;
+                    document.getElementById('temperature-min').textContent = `Ελάχιστο: ${temperatureMin}°C`;
+                    document.getElementById('temperature-avg').textContent = `Μ. όρος: ${temperatureAvg}°C`;
+                    document.getElementById('temperature-max').textContent = `Μέγιστο: ${temperatureMax}°C`;
 
-                    // Formatta la data dell'ultimo aggiornamento
+                    document.getElementById('pressure-min').textContent = `Ελάχιστο: ${pressureMin} hPa`;
+                    document.getElementById('pressure-avg').textContent = `Μ. όρος: ${pressureAvg} hPa`;
+                    document.getElementById('pressure-max').textContent = `Μέγιστο: ${pressureMax} hPa`;
+
+                    // Τελευταία ενημέρωση (από το timestamp του φύλλου)
                     if (lastRow['Data']) {
-                        const date = new Date(lastRow['Data']);
-                        const formattedDate = date.toLocaleDateString('it-IT');
-                        const formattedTime = date.toLocaleTimeString('it-IT');
-                        document.getElementById('last-update').textContent = `Ultimo aggiornamento: ${formattedDate} ${formattedTime}`;
+                        const date = parseDateString(lastRow['Data']);
+                        const formattedDate = date.toLocaleDateString('el-GR');
+                        const formattedTime = date.toLocaleTimeString('el-GR');
+                        document.getElementById('last-update').textContent =
+                            `Τελευταία ενημέρωση: ${formattedDate} ${formattedTime}`;
                     }
 
-                    // Aggiorna il valore IAQ con l'ultimo dato disponibile
-                    const iaqValue = lastRow['Static IAQ'];
+                    // Τιμή AIQ από το πεδίο aiq (0–100)
+                    const iaqValue = Number(lastRow['aiq'] || 0);
                     updateIAQ(iaqValue);
 
-                    // Ottieni gli ultimi 5 valori per ogni dato
-                    const recentHumidityValues = humidityValues.slice(-10);
+                    // Τελευταία 10 δείγματα για μίνι γραφήματα
+                    const recentHumidityValues    = humidityValues.slice(-10);
                     const recentTemperatureValues = temperatureValues.slice(-10);
-                    const recentPressureValues = pressureValues.slice(-10);
-                    const labels = Array(recentHumidityValues.length).fill(''); // Etichette vuote per l'asse X
+                    const recentPressureValues    = pressureValues.slice(-10);
+                    const labels = Array(recentHumidityValues.length).fill('');
 
+                    // Γράφημα υγρασίας
                     const humidityChart = new Chart(document.getElementById('humidityChart').getContext('2d'), {
                         type: 'line',
                         data: {
@@ -335,8 +355,8 @@
                                 x: { display: false },
                                 y: {
                                     display: true,
-                                    min: Math.min(...recentHumidityValues) - 0.05,  // Minimo - 0.05
-                                    max: Math.max(...recentHumidityValues) + 0.05,  // Massimo + 0.05
+                                    min: Math.min(...recentHumidityValues) - 1,
+                                    max: Math.max(...recentHumidityValues) + 1
                                 }
                             },
                             plugins: {
@@ -346,6 +366,7 @@
                         }
                     });
 
+                    // Γράφημα θερμοκρασίας
                     const temperatureChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
                         type: 'line',
                         data: {
@@ -362,8 +383,8 @@
                                 x: { display: false },
                                 y: {
                                     display: true,
-                                    min: Math.min(...recentTemperatureValues) - 0.5,
-                                    max: Math.max(...recentTemperatureValues) + 0.5,
+                                    min: Math.min(...recentTemperatureValues) - 1,
+                                    max: Math.max(...recentTemperatureValues) + 1
                                 }
                             },
                             plugins: {
@@ -373,6 +394,7 @@
                         }
                     });
 
+                    // Γράφημα πίεσης
                     const pressureChart = new Chart(document.getElementById('pressureChart').getContext('2d'), {
                         type: 'line',
                         data: {
@@ -389,8 +411,8 @@
                                 x: { display: false },
                                 y: {
                                     display: true,
-                                    min: Math.min(...recentPressureValues) - 0.5,  // Minimo - 0.5
-                                    max: Math.max(...recentPressureValues) + 0.5,  // Massimo + 0.5
+                                    min: Math.min(...recentPressureValues) - 1,
+                                    max: Math.max(...recentPressureValues) + 1
                                 }
                             },
                             plugins: {
@@ -400,43 +422,38 @@
                         }
                     });
                 })
-                .catch(error => console.error('Errore durante il recupero dei dati:', error));
+                .catch(error => console.error('Σφάλμα κατά την ανάκτηση των δεδομένων:', error));
         });
 
-        // Funzione per calcolare la posizione dell'indicatore IAQ
+        // Ενημέρωση μπάρας IAQ (0–100) και κειμένων
         function updateIAQ(iaqValue) {
-            const iaqBar = document.getElementById('iaqBar');
-            const iaqIndicator = document.getElementById('iaqIndicator');
-            const iaqQuality = document.getElementById('iaqQuality');
-            const iaqValueText = document.getElementById('iaqValue');
+            const iaqBar      = document.getElementById('iaqBar');
+            const iaqIndicator= document.getElementById('iaqIndicator');
+            const iaqQuality  = document.getElementById('iaqQuality');
+            const iaqValueText= document.getElementById('iaqValue');
 
-            // Imposta il valore IAQ
-            iaqValueText.textContent = `IAQ: ${iaqValue}`;
+            // Εμφάνιση αριθμητικής τιμής
+            iaqValueText.textContent = `AIQ: ${iaqValue.toFixed(0)}`;
 
-            // Imposta la valutazione della qualità dell'aria in base al valore IAQ
+            // Λεκτική αξιολόγηση ποιότητας αέρα (0–100)
             let qualityText = '';
-            if (iaqValue <= 50) {
-                qualityText = 'Eccellente';
-            } else if (iaqValue <= 100) {
-                qualityText = 'Buona';
-            } else if (iaqValue <= 150) {
-                qualityText = 'Leggermente inquinata';
-            } else if (iaqValue <= 200) {
-                qualityText = 'Moderatamente inquinata';
-            } else if (iaqValue <= 250) {
-                qualityText = 'Pesantemente inquinata';
-            } else if (iaqValue <= 350) {
-                qualityText = 'Gravemente inquinata';
+            if (iaqValue <= 20) {
+                qualityText = 'Άριστη ποιότητα αέρα';
+            } else if (iaqValue <= 40) {
+                qualityText = 'Καλή ποιότητα αέρα';
+            } else if (iaqValue <= 60) {
+                qualityText = 'Μέτρια ποιότητα αέρα';
+            } else if (iaqValue <= 80) {
+                qualityText = 'Κακή ποιότητα αέρα';
             } else {
-                qualityText = 'Estremamente inquinata';
+                qualityText = 'Πολύ κακή ποιότητα αέρα';
             }
 
-            // Aggiorna il testo della qualità dell'aria
             iaqQuality.textContent = qualityText;
 
-            // Calcola la posizione dell'indicatore in percentuale rispetto alla barra
-            const percentage = Math.min(Math.max((iaqValue / 400) * 100, 0), 100);
-            iaqIndicator.style.left = `calc(${percentage}% - 1px)`; // Centra l'indicatore sulla barra
+            // Θέση δείκτη πάνω στη μπάρα (0–100%)
+            const percentage = Math.min(Math.max(iaqValue, 0), 100);
+            iaqIndicator.style.left = `calc(${percentage}% - 1px)`;
         }
     </script>
 </body>
