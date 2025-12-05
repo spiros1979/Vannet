@@ -1,6 +1,6 @@
-# ESP32 Sensor Dashboard
+# Arduino Uno R4 Wifi 
 
-This repository contains the Arduino code and web components for a project that integrates an ESP32 microcontroller with Bosch sensors to measure humidity, temperature, and Indoor Air Quality (IAQ). The system captures real-time sensor data and visualizes it through an interactive web dashboard. The project demonstrates a full-stack IoT solution, including data collection, cloud integration, and web-based presentation.
+This repository contains the Arduino code and web components for a project that integrates the Uno R4 Wifi  board with Bosch sensors to measure humidity, temperature, and Indoor Air Quality (IAQ). The system captures real-time sensor data and visualizes it through an interactive web dashboard. The project demonstrates a full-stack IoT solution, including data collection, cloud integration, and web-based presentation.
 How It Works
 Data Collection
 
@@ -17,4 +17,4 @@ The web app processes the incoming data and appends it to a Google Sheet, effect
 
 # Data Visualization
 
-The data from the Google Sheet is fetched and displayed on a custom web dashboard, providing a user-friendly interface for monitoring the collected data in real-time. The dashboard is hosted on GitHub Pages and is freely accessible at: https://garaugarau.github.io/TempData/
+The data from the Google Sheet is fetched and displayed on a custom web dashboard, providing a user-friendly interface for monitoring the collected data in real-time. The dashboard is hosted on GitHub Pages and is freely accessible at: https://spiros1979.github.io/Vannet/
