@@ -1,13 +1,12 @@
-// Όταν πατηθεί το κουμπί "update-data" κάνουμε φόρτωση και ανανέωση των γραφημάτων
+// Όταν πατήσω το κουμπί "Ανανέωση" (εικονίδιο με τα βελάκια)
 document.getElementById('update-data').addEventListener('click', function() {
     loadDataAndUpdateCharts();
 });
 
-// Φόρτωση δεδομένων από Apps Script (JSON) και ενημέρωση των γραφημάτων
+// Κύρια συνάρτηση: διαβάζει δεδομένα από το Apps Script και ενημερώνει τα γραφήματα
 function loadDataAndUpdateCharts() {
-
-    // TODO: ΑΛΛΑΞΕ ΤΟ ΜΕ ΤΟ ΔΙΚΟ ΣΟΥ Apps Script URL που επιστρέφει JSON
-    const url = 'https://script.google.com/macros/s/AKfycbxd1U-hm2xo79srYB-o9AdgHBBCKOrbaL4fFzdJlXbzhpV08Sq8Tua6qk_5Q78cJWFZ/exec'; 
+    // URL του Google Apps Script σε mode=read (JSON για τα γραφήματα)
+    const url = 'https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read';
 
     fetch(url)
         .then(response => response.json())
@@ -17,20 +16,14 @@ function loadDataAndUpdateCharts() {
         .catch(error => console.error('Σφάλμα κατά το fetch των δεδομένων:', error));
 }
 
-// Μετατροπή string ημερομηνίας σε αντικείμενο Date (υποστηρίζει μορφή με ή χωρίς κόμμα)
+// Βοηθητική συνάρτηση: μετατρέπει string "dd/MM/yyyy HH:mm:ss" σε αντικείμενο Date
 function parseDateString(dateString) {
-    // Χωρίζουμε ημερομηνία και ώρα με βάση το κόμμα (αν υπάρχει)
-    let [datePart, timePart] = dateString.split(', ');
+    // Χωρίζουμε ημερομηνία και ώρα
+    let [datePart, timePart] = dateString.split(' ');
 
-    // Αν δεν βρέθηκε κόμμα, δοκιμάζουμε με κενό
-    if (!timePart) {
-        [datePart, timePart] = dateString.split(' ');
-    }
-
-    // Ημερομηνία σε μορφή ΗΗ/ΜΜ/ΕΕΕΕ
+    // Αν δεν υπάρχει ώρα, default 00:00:00
     const [day, month, year] = datePart.split('/').map(Number);
 
-    // Ώρα σε μορφή ΩΩ:ΛΛ:ΔΔ ή κενή
     let [hours, minutes, seconds] = [0, 0, 0];
     if (timePart) {
         [hours, minutes, seconds] = timePart.split(':').map(Number);
@@ -39,109 +32,108 @@ function parseDateString(dateString) {
     return new Date(year, month - 1, day, hours, minutes, seconds);
 }
 
-// Κύρια επεξεργασία δεδομένων + ενημέρωση HTML + προετοιμασία για Chart.js
+// Επεξεργασία δεδομένων και ενημέρωση κειμένων + γραφημάτων
 function processAndDisplayData(data) {
-    // Προ-επεξεργασία δεδομένων (μετατροπή τύπων κλπ.)
+    // 1) Προεπεξεργασία δεδομένων (τύποι, ημερομηνία κλπ.)
     const processedData = data.map(row => {
-        let temperatura = row.Temperatura;  // ΠΕΔΙΟ από το JSON / Google Sheet (μην το πειράξεις εδώ)
+        let temperatura = row.Temperatura;
 
-        // Αν είναι string, το κάνουμε number (και αντικαθιστούμε κόμμα με τελεία)
+        // Μετατροπή σε float αν είναι string (με κόμμα ή τελεία)
         if (typeof temperatura === 'string') {
             temperatura = parseFloat(temperatura.replace(',', '.'));
         } else if (typeof temperatura !== 'number') {
-            console.error('Το πεδίο Temperatura λείπει ή δεν είναι έγκυρο:', row);
-            temperatura = NaN;  // Σημειώνουμε ως μη έγκυρο
+            console.error('Πεδίο Temperatura δεν είναι έγκυρο:', row);
+            temperatura = NaN;
         }
 
-        // Μετατροπή ημερομηνίας (στήλη Data του Sheet)
-        const parsedDate = new Date(row.Data);
+        // Μετατροπή ημερομηνίας με δική μας συνάρτηση (μορφή dd/MM/yyyy HH:mm:ss)
+        const parsedDate = parseDateString(row.Data);
         if (isNaN(parsedDate.getTime())) {
             console.error('Μη έγκυρη ημερομηνία:', row.Data);
         }
 
         return {
             ...row,
-            Data: parsedDate,      // Φροντίζουμε η Data να είναι τύπου Date
+            Data: parsedDate,       // Αποθηκεύουμε Date object
             Temperatura: temperatura
         };
     });
 
-    // Αν ΟΛΕΣ οι θερμοκρασίες είναι NaN, τότε κάτι πάει στραβά
+    // 2) Έλεγχος: αν όλες οι θερμοκρασίες είναι NaN, σταματάμε
     if (processedData.every(row => isNaN(row.Temperatura))) {
         console.error('Όλες οι τιμές θερμοκρασίας είναι μη έγκυρες.');
+        document.getElementById('latest-temp').textContent = 'Δεν υπάρχουν διαθέσιμα δεδομένα.';
         return;
     }
 
-    // Φιλτράρισμα δεδομένων ανάλογα με το φίλτρο χρόνου (π.χ. 24h, 12h...)
+    // 3) Φιλτράρισμα ανάλογα με το φίλτρο χρόνου (1h, 3h, 6h, 12h, 24h, όλα)
     const timeFilter = document.getElementById('timeFilter').value;
     const filteredDataMinuto = filterDataByTime(processedData, timeFilter);
-    
+
     if (filteredDataMinuto.length === 0) {
-        console.error("Δεν υπάρχουν δεδομένα μετά το φιλτράρισμα.");
-        document.getElementById('latest-temp').textContent = "Δεν υπάρχουν διαθέσιμα δεδομένα.";
+        console.error('Δεν υπάρχουν δεδομένα μετά το φιλτράρισμα.');
+        document.getElementById('latest-temp').textContent = 'Δεν υπάρχουν διαθέσιμα δεδομένα.';
         return;
     }
 
-    // Τελευταία θερμοκρασία (η πιο πρόσφατη εγγραφή)
+    // 4) Τελευταία θερμοκρασία
     const latestTemp = filteredDataMinuto[filteredDataMinuto.length - 1].Temperatura;
     document.getElementById('latest-temp').textContent =
         `Τελευταία θερμοκρασία: ${latestTemp.toFixed(2)} °C`;
 
-    // Τελευταία ώρα ενημέρωσης (τώρα)
+    // 5) Τελευταία ενημέρωση (ώρα συστήματος)
     const lastUpdateTime = new Date().toLocaleString('el-GR', { hour12: false });
     document.getElementById('last-update').textContent =
         `Τελευταία ενημέρωση: ${lastUpdateTime}`;
 
-    // Δεδομένα για 1ο γράφημα (λεπτό προς λεπτό)
-    const labelsMinuto = filteredDataMinuto.map(row => row.Data.toLocaleString('el-GR'));
+    // 6) Δεδομένα για 1ο γράφημα (ανά λεπτό)
+    const labelsMinuto = filteredDataMinuto.map(
+        row => row.Data.toLocaleString('el-GR', { hour12: false })
+    );
     const dataMinuto = filteredDataMinuto.map(row => row.Temperatura);
 
-    // Δεδομένα για 2ο γράφημα (μέση θερμοκρασία ανά ώρα + confidence intervals)
+    // 7) Δεδομένα για 2ο γράφημα (ωριαίος μέσος όρος με confidence intervals)
     const hourlyData = aggregateHourly(filteredDataMinuto);
     const labelsOra = hourlyData.map(row => row.label);
-    const dataOra = hourlyData.map(row => row.meanTemp);
-    const ciUpper = hourlyData.map(row => row.ciUpper);
-    const ciLower = hourlyData.map(row => row.ciLower);
+    const dataOra   = hourlyData.map(row => row.meanTemp);
+    const ciUpper   = hourlyData.map(row => row.ciUpper);
+    const ciLower   = hourlyData.map(row => row.ciLower);
 
-    // Τελική ενημέρωση των γραφημάτων
+    // 8) Τελική ενημέρωση των δυο γραφημάτων
     updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower);
 }
 
-// Φιλτράρισμα δεδομένων με βάση χρονικό παράθυρο (1h, 3h, 6h, 12h, 24h)
+// Φιλτράρει δεδομένα με βάση το φίλτρο χρόνου
 function filterDataByTime(data, filter) {
     const lastTimestamp = data[data.length - 1].Data.getTime();
 
     let timeFrame = 0;
     switch (filter) {
         case 'last24h':
-            timeFrame = 24 * 60 * 60 * 1000; // 24 ώρες
+            timeFrame = 24 * 60 * 60 * 1000;
             break;
         case 'last12h':
-            timeFrame = 12 * 60 * 60 * 1000; // 12 ώρες
+            timeFrame = 12 * 60 * 60 * 1000;
             break;
         case 'last6h':
-            timeFrame = 6 * 60 * 60 * 1000;  // 6 ώρες
+            timeFrame = 6 * 60 * 60 * 1000;
             break;
         case 'last3h':
-            timeFrame = 3 * 60 * 60 * 1000;  // 3 ώρες
+            timeFrame = 3 * 60 * 60 * 1000;
             break;
         case 'last1h':
-            timeFrame = 1 * 60 * 60 * 1000;  // 1 ώρα
+            timeFrame = 1 * 60 * 60 * 1000;
             break;
         default:
-            // "Όλα τα δεδομένα"
-            return data;
+            return data; // "all"
     }
 
-    const filteredData = data.filter(row =>
-        row.Data.getTime() >= (lastTimestamp - timeFrame)
-    );
-
-    console.log(`Φιλτραρισμένα δεδομένα (${filter}):`, filteredData);
+    const filteredData = data.filter(row => row.Data.getTime() >= (lastTimestamp - timeFrame));
+    console.log(`Δεδομένα μετά το φιλτράρισμα (${filter}):`, filteredData);
     return filteredData;
 }
 
-// Ομαδοποίηση δεδομένων ανά ώρα και υπολογισμός μέσης τιμής + 95% confidence interval
+// Ομαδοποίηση ανά ώρα + υπολογισμός μέσου όρου και 95% CI
 function aggregateHourly(data) {
     const grouped = data.reduce((acc, curr) => {
         const hour = curr.Data.getHours();
@@ -160,12 +152,12 @@ function aggregateHourly(data) {
         const values = grouped[key];
         const meanTemp = values.reduce((a, b) => a + b, 0) / values.length;
 
-        // Υπολογισμός τυπικού σφάλματος
-        const stdErr = Math.sqrt(
-            values.reduce((sum, val) => sum + Math.pow(val - meanTemp, 2), 0) /
-            (values.length - 1)
-        ) / Math.sqrt(values.length);
-
+        // Τυπικό σφάλμα και 95% διάστημα εμπιστοσύνης
+        let stdErr = 0;
+        if (values.length > 1) {
+            const variance = values.reduce((sum, val) => sum + Math.pow(val - meanTemp, 2), 0) / (values.length - 1);
+            stdErr = Math.sqrt(variance) / Math.sqrt(values.length);
+        }
         const ci95 = 1.96 * stdErr;
 
         return {
@@ -177,12 +169,12 @@ function aggregateHourly(data) {
     });
 }
 
-// Δημιουργία / ενημέρωση των 2 γραφημάτων (λεπτό-λεπτό & μέση ανά ώρα)
+// Δημιουργία / ενημέρωση των δύο γραφημάτων (λεπτό-λεπτό και μέσος όρος ανά ώρα)
 function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower) {
     const minutoCtx = document.getElementById('minutoChart').getContext('2d');
-    const oraCtx = document.getElementById('oraChart').getContext('2d');
+    const oraCtx    = document.getElementById('oraChart').getContext('2d');
 
-    // Αν υπάρχουν ήδη γραφήματα, τα καταστρέφουμε πριν ξαναφτιάξουμε
+    // Αν υπάρχουν ήδη παλιά γραφήματα, τα καταστρέφουμε
     if (window.minutoChart && typeof window.minutoChart.destroy === 'function') {
         window.minutoChart.destroy();
     }
@@ -191,7 +183,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
         window.oraChart.destroy();
     }
 
-    // -------- 1ο Γράφημα: Θερμοκρασία ανά λεπτό --------
+    // 1ο γράφημα: θερμοκρασία ανά λεπτό
     try {
         window.minutoChart = new Chart(minutoCtx, {
             type: 'line',
@@ -211,7 +203,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false // Απόκρυψη legend
+                        display: false
                     }
                 },
                 scales: {
@@ -219,16 +211,13 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                         display: true,
                         title: { display: true, text: '' },
                         ticks: {
-                            callback: function(value, index, ticks) {
-                                // Εμφάνιση ετικέτας μόνο κάθε 10 σημεία
+                            callback: function(value, index) {
+                                // Προβολή μόνο κάθε 10ης ετικέτας για να μην γίνεται χαμός
                                 if (index % 10 === 0) {
-                                    const date = parseDateString(labelsMinuto[value]);
-                                    if (!isNaN(date.getTime())) {
-                                        return date.toLocaleDateString('el-GR');
-                                    } else {
-                                        console.error('Σφάλμα στη μετατροπή ημερομηνίας:', labelsMinuto[value]);
-                                        return '';
-                                    }
+                                    // Επιστρέφουμε μόνο την ημερομηνία (πριν το κόμμα)
+                                    const label = labelsMinuto[value];
+                                    const parts = label.split(',');
+                                    return parts[0] || label;
                                 } else {
                                     return '';
                                 }
@@ -243,18 +232,18 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
             }
         });
     } catch (error) {
-        console.error('Σφάλμα κατά τη δημιουργία του γραφήματος λεπτού-λεπτού:', error);
+        console.error('Σφάλμα κατά τη δημιουργία του γραφήματος λεπτό-λεπτό:', error);
     }
 
-    // -------- 2ο Γράφημα: Μέση Θερμοκρασία ανά ώρα + 95% CI --------
+    // 2ο γράφημα: μέση θερμοκρασία ανά ώρα με 95% CI
     try {
         window.oraChart = new Chart(oraCtx, {
             type: 'line',
             data: {
-                labels: labelsOra, 
+                labels: labelsOra,
                 datasets: [
                     {
-                        label: 'Μέση Θερμοκρασία Ανά Ώρα',
+                        label: 'Μέση θερμοκρασία ανά ώρα',
                         data: dataOra,
                         borderColor: 'rgba(153, 102, 255, 1)',
                         fill: false,
@@ -262,7 +251,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                         pointRadius: 0
                     },
                     {
-                        label: 'Διάστημα Εμπιστοσύνης 95%',
+                        label: '95% CI',
                         data: ciUpper,
                         borderColor: 'rgba(255, 159, 64, 0.2)',
                         fill: '-1',
@@ -271,7 +260,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                         pointRadius: 0
                     },
                     {
-                        label: 'Διάστημα Εμπιστοσύνης 95%',
+                        label: '95% CI',
                         data: ciLower,
                         borderColor: 'rgba(255, 159, 64, 0.2)',
                         fill: '-1',
@@ -294,12 +283,12 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                         display: true,
                         title: { display: true, text: '' },
                         ticks: {
-                            callback: function(value, index, ticks) {
-                                // Εμφάνιση ημερομηνίας μόνο κάθε 2 labels
+                            callback: function(value, index) {
+                                // Προβολή μόνο κάθε 2ης ετικέτας
                                 if (index % 2 === 0) {
                                     const dateLabel = labelsOra[value];
-                                    const [datePart, timePart] = dateLabel.split(' ');
-                                    return datePart; // Επιστρέφουμε μόνο την ημερομηνία
+                                    const [datePart] = dateLabel.split(' ');
+                                    return datePart || dateLabel;
                                 } else {
                                     return '';
                                 }
@@ -314,22 +303,18 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
             }
         });
     } catch (error) {
-        console.error('Σφάλμα κατά τη δημιουργία του γραφήματος μέσης θερμοκρασίας ανά ώρα:', error);
+        console.error('Σφάλμα κατά τη δημιουργία του γραφήματος μέσης θερμοκρασίας:', error);
     }
-
 }
 
-// Όταν φορτώνει η σελίδα:
+// Όταν φορτώσει η σελίδα, φορτώνουμε δεδομένα και δένουμε τα events
 document.addEventListener('DOMContentLoaded', function() {
-    // Αρχική φόρτωση δεδομένων
     loadDataAndUpdateCharts();
 
-    // Κουμπί ανανέωσης
     document.getElementById('update-data').addEventListener('click', function() {
         loadDataAndUpdateCharts();
     });
 
-    // Αλλαγή φίλτρου χρόνου από το dropdown
     document.getElementById('timeFilter').addEventListener('change', function() {
         loadDataAndUpdateCharts();
     });
