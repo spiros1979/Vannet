@@ -1,14 +1,18 @@
 //------------------------------------------------------------
-// appumidit.js (έκδοση με φιλτράρισμα invalid δεδομένων)
+// appumidit.js (Πλήρης διορθωμένη έκδοση)
 //------------------------------------------------------------
 
 //==========================================================
-// Βοηθητική συνάρτηση: "dd/MM/yyyy HH:mm:ss" → Date()
+// 1. Βοηθητική συνάρτηση: "dd/MM/yyyy HH:mm:ss" → Date()
 //==========================================================
 function parseDateString(dateString) {
     try {
-        const [datePart, timePart] = (dateString || "").split(" ");
-        const [day, month, year]   = (datePart || "").split("/").map(Number);
+        const safeString = dateString || "";
+        const [datePart, timePart] = safeString.split(" ");
+
+        if (!datePart) throw new Error("Missing date part");
+
+        const [day, month, year] = datePart.split("/").map(Number);
 
         let hours = 0, minutes = 0, seconds = 0;
 
@@ -21,7 +25,6 @@ function parseDateString(dateString) {
 
         const d = new Date(year, month - 1, day, hours, minutes, seconds);
         if (isNaN(d.getTime())) {
-            // invalid ημερομηνία
             throw new Error("Invalid date");
         }
         return d;
@@ -32,16 +35,21 @@ function parseDateString(dateString) {
 }
 
 //==========================================================
-// Φόρτωμα δεδομένων από Google Script
+// 2. Φόρτωμα δεδομένων από Google Script
 //==========================================================
 function loadDataAndUpdateCharts() {
     const url = "https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read";
 
     fetch(url)
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) {
+                throw new Error("HTTP error " + r.status);
+            }
+            return r.json();
+        })
         .then(data => processAndDisplayData(data))
         .catch(err => {
-            console.error("Σφάλμα fetch:", err);
+            console.error("Σφάλμα φόρτωσης/επεξεργασίας δεδομένων:", err);
             const latest = document.getElementById("latest-temp");
             if (latest) {
                 latest.textContent = "Σφάλμα φόρτωσης δεδομένων";
@@ -50,10 +58,17 @@ function loadDataAndUpdateCharts() {
 }
 
 //==========================================================
-// Επεξεργασία δεδομένων
+// 3. Επεξεργασία δεδομένων
 //==========================================================
 function processAndDisplayData(data) {
-    // 1. Μετατροπή & καθάρισμα
+    if (!Array.isArray(data)) {
+        console.error("Τα δεδομένα δεν είναι array:", data);
+        const latest = document.getElementById("latest-temp");
+        if (latest) latest.textContent = "Σφάλμα: μη έγκυρη μορφή δεδομένων";
+        return;
+    }
+
+    // 3.1 Μετατροπή & καθάρισμα
     let processed = data.map(row => {
         // Υγρασία
         const humRaw = Number(row["Umidità"]);
@@ -80,7 +95,7 @@ function processAndDisplayData(data) {
         return;
     }
 
-    // 2. Φίλτρο χρόνου
+    // 3.2 Φίλτρο χρόνου
     const timeFilterEl = document.getElementById("timeFilter");
     const filter = timeFilterEl ? timeFilterEl.value : "all";
 
@@ -95,17 +110,17 @@ function processAndDisplayData(data) {
         return;
     }
 
-    // 3. Τελευταίο δείγμα
+    // 3.3 Τελευταίο δείγμα
     const last = filtered[filtered.length - 1];
     document.getElementById("latest-temp").textContent =
         `Τελευταία υγρασία: ${last.Umidità.toFixed(2)} %`;
 
-    // 4. Timestamp ενημέρωσης
+    // 3.4 Timestamp ενημέρωσης
     const now = new Date().toLocaleString("el-GR", { hour12: false });
     document.getElementById("last-update").textContent =
         `Τελευταία ενημέρωση: ${now}`;
 
-    // 5. Labels & data για λεπτό-λεπτό
+    // 3.5 Labels & data για λεπτό-λεπτό
     const labelsMinuto = filtered.map(row =>
         row.Data.toLocaleTimeString("el-GR", {
             hour: "2-digit",
@@ -116,7 +131,7 @@ function processAndDisplayData(data) {
 
     const dataMinuto = filtered.map(row => row.Umidità);
 
-    // 6. Ωριαία ομαδοποίηση
+    // 3.6 Ωριαία ομαδοποίηση
     const hourly = aggregateHourly(filtered);
 
     const labelsOra = hourly.map(h => h.label);
@@ -124,12 +139,12 @@ function processAndDisplayData(data) {
     const ciUpper   = hourly.map(h => h.ciUpper);
     const ciLower   = hourly.map(h => h.ciLower);
 
-    // 7. Δημιουργία γραφημάτων
+    // 3.7 Δημιουργία γραφημάτων
     updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower);
 }
 
 //==========================================================
-// Φιλτράρισμα ανά 1h / 3h / 6h / 12h / 24h
+// 4. Φιλτράρισμα ανά 1h / 3h / 6h / 12h / 24h
 //==========================================================
 function filterDataByTime(data, filter) {
     if (!data.length) return [];
@@ -155,7 +170,7 @@ function filterDataByTime(data, filter) {
 }
 
 //==========================================================
-// Ομαδοποίηση ανά ώρα με CI
+// 5. Ομαδοποίηση ανά ώρα με CI
 //==========================================================
 function aggregateHourly(data) {
     const groups = {};
@@ -207,7 +222,7 @@ function aggregateHourly(data) {
 }
 
 //==========================================================
-// Δημιουργία ΓΡΑΦΗΜΑΤΩΝ
+// 6. Δημιουργία ΓΡΑΦΗΜΑΤΩΝ
 //==========================================================
 function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower) {
     const canvasMin = document.getElementById("minutoChart");
@@ -221,11 +236,16 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
     const ctxMin = canvasMin.getContext("2d");
     const ctxOra = canvasOra.getContext("2d");
 
-    if (window.minutoChart) window.minutoChart.destroy();
-    if (window.oraChart) window.oraChart.destroy();
+    // Ασφαλές destroy: μόνο αν είναι object ΚΑΙ έχει destroy()
+    if (window.minutoChart && typeof window.minutoChart.destroy === "function") {
+        window.minutoChart.destroy();
+    }
+    if (window.oraChart && typeof window.oraChart.destroy === "function") {
+        window.oraChart.destroy();
+    }
 
     //------------------------------------------------------
-    // Γράφημα λεπτό-λεπτό
+    // 6.1 Γράφημα λεπτό-λεπτό
     //------------------------------------------------------
     window.minutoChart = new Chart(ctxMin, {
         type: "line",
@@ -248,9 +268,8 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
             scales: {
                 x: {
                     ticks: {
-                        // value εδώ είναι ήδη το label (π.χ. "10:05")
                         callback: (value, index) =>
-                            index % 10 === 0 ? value : ""
+                            index % 10 === 0 ? labelsMinuto[value] : ""
                     }
                 },
                 y: {
@@ -261,7 +280,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
     });
 
     //------------------------------------------------------
-    // Γράφημα ωριαίας μέσης υγρασίας + CI
+    // 6.2 Γράφημα ωριαίας μέσης υγρασίας + CI
     //------------------------------------------------------
     window.oraChart = new Chart(ctxOra, {
         type: "line",
@@ -276,14 +295,14 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                     pointRadius: 0
                 },
                 {
-                    label: "95% CI πάνω",
+                    label: "95% CI (πάνω)",
                     data: ciUpper,
                     borderWidth: 1,
                     tension: 0.1,
                     pointRadius: 0
                 },
                 {
-                    label: "95% CI κάτω",
+                    label: "95% CI (κάτω)",
                     data: ciLower,
                     borderWidth: 1,
                     tension: 0.1,
@@ -301,7 +320,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
                 x: {
                     ticks: {
                         callback: (value, index) =>
-                            index % 2 === 0 ? value : ""
+                            index % 2 === 0 ? labelsOra[value] : ""
                     }
                 },
                 y: {
@@ -313,7 +332,7 @@ function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciL
 }
 
 //==========================================================
-// Εκκίνηση
+// 7. Εκκίνηση όταν φορτώσει το DOM
 //==========================================================
 document.addEventListener("DOMContentLoaded", function() {
     // αρχικό φόρτωμα
@@ -334,3 +353,4 @@ document.addEventListener("DOMContentLoaded", function() {
         timeFilterEl.addEventListener("change", loadDataAndUpdateCharts);
     }
 });
+
