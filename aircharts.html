@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BME680 - Γραφήματα Δείκτη Ποιότητας Αέρα (AIQ)</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: rgb(238, 238, 237);
+            color: #241e1d;
+        }
+
+        /* Banner */
+        .banner {
+            background-color: rgb(188, 173, 175);
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+            width: 100%;
+            color: #241e1d;
+        }
+
+        .banner-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Εικονίδια πλοήγησης */
+        .nav-item img {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+        }
+
+        /* Πλοήγηση */
+        nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-item {
+            margin-left: 20px;
+            display: inline-block;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        /* Mobile / μικρές οθόνες */
+        @media (max-width: 576px) {
+            nav {
+                justify-content: center;
+            }
+            .nav-item {
+                margin-left: 10px;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Περιέκτης γραφημάτων */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        /* Υπόμνημα κάτω δεξιά για το 2ο γράφημα */
+        .chart-legend-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 15px;
+            margin-top: 5px;
+            margin-bottom: 25px;
+        }
+
+        .chart-legend-box {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 10px 14px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            font-size: 13px;
+            color: #241e1d;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 22px;
+            height: 4px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        /* Χρώματα υπομνήματος (όπως στα άλλα γραφήματα) */
+        .legend-mean {
+            background-color: #4E9DF2;   /* Μέση ωριαία τιμή AIQ */
+        }
+
+        .legend-ci-upper {
+            background-color: #C44127;   /* Άνω όριο 95% CI */
+        }
+
+        .legend-ci-lower {
+            background-color: #E0AA14;   /* Κάτω όριο 95% CI */
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 50px;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 12px;
+            color: #241e1d;
+        }
+
+        footer img {
+            margin: 0 10px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Banner -->
+    <div class="banner">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-6">
+                    <div class="banner-title">BME680 - Γραφήματα Δείκτη Ποιότητας Αέρα (AIQ)</div>
+                    <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
+                </div>
+                <div class="col-6 text-right">
+                    <nav>
+                        <a class="nav-item" href="#" id="update-data">
+                            <img src="arrows-counter-clockwise.svg" alt="Ανανέωση" title="Ανανέωση δεδομένων">
+                        </a>
+                        <a class="nav-item" href="index.html">
+                            <img src="speedometer.svg" alt="Αρχική" title="Κεντρικός πίνακας">
+                        </a>
+                        <a class="nav-item" href="charts.html">
+                            <img src="thermometer.svg" alt="Γραφήματα θερμοκρασίας" title="Γραφήματα θερμοκρασίας">
+                        </a>
+                        <a class="nav-item" href="humcharts.html">
+                            <img src="drop-half-bottom.svg" alt="Γραφήματα υγρασίας" title="Γραφήματα υγρασίας">
+                        </a>
+                        <a class="nav-item" href="presscharts.html">
+                            <img src="cloud-sun.svg" alt="Γραφήματα πίεσης" title="Γραφήματα πίεσης">
+                        </a>
+                        <a class="nav-item" href="about.html">
+                            <img src="info.svg" alt="Πληροφορίες" title="Σχετικά με τη σελίδα">
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Περιεχόμενο -->
+    <div class="container-fluid">
+
+        <!-- Τελευταία τιμή AIQ -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h4 id="latest-temp">Τελευταία τιμή AIQ: --</h4>
+            </div>
+        </div>
+
+        <!-- Επιλογή χρονικού φίλτρου -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <select id="timeFilter" class="form-control w-35 mx-auto">
+                    <option value="all">Όλα τα δεδομένα</option>
+                    <option value="last24h">Τελευταίες 24 ώρες</option>
+                    <option value="last12h">Τελευταίες 12 ώρες</option>
+                    <option value="last6h">Τελευταίες 6 ώρες</option>
+                    <option value="last3h">Τελευταίες 3 ώρες</option>
+                    <option value="last1h">Τελευταία 1 ώρα</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Γραφήματα -->
+        <div class="row">
+
+            <!-- Γράφημα AIQ λεπτό-λεπτό -->
+            <div class="col-12">
+                <div class="chart-container">
+                    <canvas id="minutoChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Γράφημα ωριαίας μέσης τιμής AIQ + 95% CI -->
+            <div class="col-12 mt-4">
+                <div class="chart-container">
+                    <canvas id="oraChart"></canvas>
+                </div>
+
+                <!-- Υπόμνημα κάτω δεξιά -->
+                <div class="chart-legend-wrapper">
+                    <div class="chart-legend-box">
+                        <div class="legend-item">
+                            <div class="legend-color legend-mean"></div>
+                            <span>Μέση ωριαία τιμή AIQ</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-ci-upper"></div>
+                            <span>Άνω όριο 95% CI</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-ci-lower"></div>
+                            <span>Κάτω όριο 95% CI</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>
+                <img src="Eap.png" alt="ΕΑΠ" style="width:50%; max-width:200px; height:auto; display:block; margin:0 auto 10px auto;">
+                Vannet – ομαδικό project στο πλαίσιο μεταπτυχιακών σπουδών ΕΑΠ ΠΜΣ ΣΔΥ - ΣΔΥ60 2025/2026.
+            </p>
+
+            <p>
+                Σ. Ζερβός: 
+                <a href="https://github.com/spiros1979" target="_blank">GitHub</a> &nbsp;|&nbsp;
+                Χ. Σπένδας: 
+                <a href="https://github.com/Christos-SP" target="_blank">GitHub</a> &nbsp;|&nbsp;
+                Ε. Χριστοδούλου: 
+                <a href="https://github.com/EvangelosChr" target="_blank">GitHub</a>
+            </p>
+
+            <p style="font-size:13px;">
+                CV Σ. Ζερβού: 
+                <a href="https://spiros1979.github.io/markdown-cv/" target="_blank">https://spiros1979.github.io/markdown-cv/</a>
+                &nbsp;|&nbsp;
+                CV Χ. Σπένδα: 
+                <a href="https://christos-sp.github.io/myCV/" target="_blank">https://christos-sp.github.io/myCV/</a>
+                &nbsp;|&nbsp;
+                CV Ε. Χριστοδούλου: 
+                <a href="https://evangeloschr.github.io/GE1_MyCV_Christodoulou/" target="_blank">https://evangeloschr.github.io/GE1_MyCV_Christodoulou/</a>
+            </p>
+    </footer>
+
+    <!-- Μόνο το JS για AIQ (δεν χρειάζεται PapaParse εδώ) -->
+    <script src="appair.js"></script>
+</body>
+</html>

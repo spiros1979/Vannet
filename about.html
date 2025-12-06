@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Vannet</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background-color: rgb(238, 238, 237);
+            color: #241e1d;
+        }
+        .banner {
+            background-color: rgb(188, 173, 175);
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+            width: 100%;
+            color: #241e1d;
+        }
+        .banner-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .nav-item {
+            margin-left: 20px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .nav-item img {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+        }
+        nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        .content {
+            margin: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        h2 {
+            color: rgb(110, 65, 69);
+            font-weight: bold;
+        }
+        h3 {
+            color: rgb(110, 65, 69);
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        h4 {
+            color: rgb(110, 65, 69);
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        a {
+            color: rgb(110, 65, 69);
+            font-weight: bold;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+        figure {
+            text-align: center;
+            margin: 20px auto;
+        }
+        figure img {
+            max-width: 50%;
+            height: auto;
+        }
+        figcaption {
+            color: rgb(110, 65, 69);
+        }
+        footer {
+            margin-top: 50px;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 14px;
+            color: #241e1d;
+        }
+    </style>
+</head>
+<body>
+    <!-- Banner -->
+    <div class="banner">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-6">
+                    <div class="banner-title">Σχετικά με αυτό το site</div>
+                </div>
+                <div class="col-6 text-right">
+                    <nav>
+                        <a class="nav-item" href="index.html">
+                            <img src="speedometer.svg" alt="Home" title="Dashboard">
+                        </a>
+                        <a class="nav-item" href="charts.html">
+                            <img src="thermometer.svg" alt="Charts" title="Temperature Charts">
+                        </a>
+                        <a class="nav-item" href="humcharts.html">
+                            <img src="drop-half-bottom.svg" alt="Humidity Charts" title="Humidity Charts">
+                        </a>
+                        <a class="nav-item" href="presscharts.html">
+                            <img src="cloud-sun.svg" alt="Pressure Charts" title="Pressure Charts">
+                        </a>
+                        <a class="nav-item" href="about.html">
+                            <img src="info.svg" alt="About This Site">
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="content">
+            <p>
+                Η σελίδα που βλέπεις είναι μέρος του project <strong>Vannet</strong> και υλοποιείται με το repo 
+                <a href="https://github.com/spiros1979/Vannet.git" target="_blank">https://github.com/spiros1979/Vannet.git</a> 
+                και το GitHub Pages.  
+                Aποτελεί fork του 
+                <a href="https://github.com/GarauGarau/TempData" target="_blank">https://github.com/GarauGarau/TempData</a>.
+                Η ιδέα είναι σχετικά απλή: να έχουμε μια καθαρή εικόνα για τις κλιματολογικές συνθήκες μιας περιοχής 
+                (θερμοκρασία, υγρασία, πίεση, ποιότητα αέρα), μετεωρολογική πρόβλεψη, καθώς και δεδομένα από δεξαμενές 
+                (στάθμη) και κατανάλωση νερού σε σπίτι ή χωράφι. 
+                Η εφαρμογή ενημερώνει άμεσα τον χρήστη μέσα από ένα web dashboard, χρησιμοποιώντας βασικά εργαλεία: 
+                <strong>HTML, CSS, JavaScript</strong> και <strong>Chart.js</strong>.</strong> και <strong>Chart.js</strong>.
+            </p>
+
+            <p>
+                Στο “παρασκήνιο” τρέχει ένα <strong>Arduino UNO R4 WiFi</strong> σε συνδυασμό με έναν 
+                <strong>Pimoroni BME680</strong> αισθητήρα. Το UNO R4 διαβάζει τις τιμές από τον αισθητήρα και 
+                τις στέλνει περιοδικά, ενώ η εφαρμογή που φτιάξαμε σε JavaScript και HTML αναλαμβάνει να τις 
+                εμφανίσει με έναν τρόπο που να είναι εύκολο να διαβαστεί, ακόμη και από κάποιον που απλά θέλει 
+                να δει «τι καιρό κάνει». Ωστόσο, ο απώτερος σκοπός είναι το σύστημα να κάνει πολύ περισσότερα πράγματα.
+            </p>
+
+            <h2>Hardware – UNO R4 WiFi & Pimoroni BME680</h2>
+
+            <h3>Arduino UNO R4 WiFi</h3>
+            <p>
+                Το <strong>UNO R4 WiFi</strong> είναι η βασική πλακέτα του συστήματος. Κρατάει το κλασικό 
+                form factor του Arduino UNO, αλλά προσθέτει:
+            </p>
+            <ul>
+                <li>Πιο ισχυρό μικροελεγκτή 32-bit για άνετο χειρισμό των μετρήσεων.</li>
+                <li>Ενσωματωμένο WiFi, ώστε να μπορεί να στέλνει τα δεδομένα χωρίς πρόσθετα modules.</li>
+                <li>Συμβατότητα με I²C, που κάνει εύκολη τη σύνδεση με breakout αισθητήρων όπως ο BME680.</li>
+            </ul>
+
+            <h3>Pimoroni BME680</h3>
+            <p>
+                Το <strong>Pimoroni BME680</strong> είναι ένα μικρό breakout που βασίζεται στον αισθητήρα 
+                <strong>Bosch BME680</strong> και μπορεί να μετρήσει:
+            </p>
+            <ul>
+                <li>Θερμοκρασία</li>
+                <li>Σχετική υγρασία</li>
+                <li>Βαρομετρική πίεση</li>
+                <li>Gas / VOC (δείκτης ποιότητας αέρα)</li>
+            </ul>
+            <p>
+                Η επικοινωνία με την UNO R4 γίνεται μέσω <strong>I²C</strong>, άρα στην πράξη 
+                χρειάζονται μόνο γραμμές για SDA, SCL, τροφοδοσία και γείωση. Ο αισθητήρας λειτουργεί σε 
+                εύρος τιμών ιδανικό τόσο για εσωτερικό όσο και για εξωτερικό χώρο.
+            </p>
+
+            <figure id="image1">
+                <img src="sensor.jpg" alt="BME680 pinout">
+                <figcaption>Εικόνα 1: BME680 pinout – ο αισθητήρας που «βλέπει» το περιβάλλον.</figcaption>
+            </figure>
+
+            <h4>Πρακτικές λεπτομέρειες</h4>
+            <ul>
+                <li>Οι μετρήσεις γίνονται περιοδικά (π.χ. ανά δίλεπτο) ώστε να έχουμε ομαλές καμπύλες στα γραφήματα.</li>
+                <li>Ο BME680 χρειάζεται λίγο χρόνο στην αρχή για να σταθεροποιηθούν οι τιμές gas.</li>
+                <li>Επειδή ο αισθητήρας είναι πάνω σε πλακέτα, η θερμοκρασία μπορεί να διαβάζεται 1–2 βαθμούς πιο πάνω.</li>
+                <li>Ο δείκτης IAQ είναι προς το παρόν περισσότερο ενδεικτικός· μελλοντικά θα χρησιμοποιηθεί κατάλληλη βιβλιοθήκη για πιο αξιόπιστη εκτίμηση.</li>
+            </ul>
+
+            <h2>Frontend – Η web εφαρμογή</h2>
+            <p>
+                Η εφαρμογή που «πατάει» πάνω στα δεδομένα είναι φτιαγμένη με <strong>απλό HTML και JavaScript</strong>, 
+                όπως δουλέψαμε στα προηγούμενα βήματα:
+            </p>
+            <ul>
+                <li><strong>HTML + Bootstrap</strong> για τη βασική δομή και το layout των σελίδων.</li>
+                <li><strong>JavaScript</strong> για να φορτώνει τα δεδομένα, να τα επεξεργάζεται και να ενημερώνει τα γραφήματα.</li>
+                <li><strong>Chart.js</strong> για τη δημιουργία των γραφημάτων θερμοκρασίας, υγρασίας και πίεσης.</li>
+            </ul>
+
+            <p>
+                Η αρχική σελίδα λειτουργεί σαν <strong>dashboard</strong> με τις πιο πρόσφατες τιμές, ενώ οι υπόλοιπες 
+                σελίδες (Temperature / Humidity / Pressure charts) δείχνουν την ιστορία των μετρήσεων και επιτρέπουν 
+                πιο «ήρεμη» ματιά στις τάσεις κατά τη διάρκεια της ημέρας.
+            </p>
+
+            <figure id="image2">
+                <img src="Vannet_Wiring.png" alt="Συνδεσμολογία UNO R4 Wifi με BME680">
+                <figcaption>Εικόνα 2: Ενδεικτική συνδεσμολογία μεταξύ UNO R4 WiFi και Pimoroni BME680.</figcaption>
+            </figure>
+
+            <h2>Γιατί έτσι</h2>
+            <p>
+                Ο στόχος δεν είναι να φτιάξουμε κάτι περίπλοκο, αλλά κάτι που αργότερα θα αποτελέσει μέρος ενός μεγαλύτερου app  
+                που θα προσφέρει διάδραση με τον χρήστη και θα συνδέει:
+            </p>
+            <ul>
+                <li>Πραγματικές μετρήσεις από Arduino και αισθητήρα.</li>
+                <li>Μια απλή web διεπαφή με HTML, CSS και JavaScript.</li>
+                <li>Γραφική απεικόνιση με Chart.js, ώστε το χωράφι ή το σπίτι να αποκτήσει ένα μικρό «ψηφιακό δίδυμο» στην οθόνη.</li>
+            </ul>
+
+            <p>
+                Έτσι μπορούμε σχετικά απλά να έχουμε ένα πρακτικό παράδειγμα συνδυασμού hardware και web τεχνολογιών.
+            </p>
+        </div>
+
+        <footer>
+            <p>
+                <img src="Eap.png" alt="ΕΑΠ" style="width:50%; max-width:200px; height:auto; display:block; margin:0 auto 10px auto;">
+                Vannet – ομαδικό project στο πλαίσιο μεταπτυχιακών σπουδών ΕΑΠ ΠΜΣ ΣΔΥ - ΣΔΥ60 2025/2026.
+            </p>
+
+            <p>
+                Σ. Ζερβός: 
+                <a href="https://github.com/spiros1979" target="_blank">GitHub</a> &nbsp;|&nbsp;
+                Χ. Σπένδας: 
+                <a href="https://github.com/Christos-SP" target="_blank">GitHub</a> &nbsp;|&nbsp;
+                Ε. Χριστοδούλου: 
+                <a href="https://github.com/EvangelosChr" target="_blank">GitHub</a>
+            </p>
+
+            <p style="font-size:13px;">
+                CV Σ. Ζερβού: 
+                <a href="https://spiros1979.github.io/markdown-cv/" target="_blank">https://spiros1979.github.io/markdown-cv/</a>
+                &nbsp;|&nbsp;
+                CV Χ. Σπένδα: 
+                <a href="https://christos-sp.github.io/myCV/" target="_blank">https://christos-sp.github.io/myCV/</a>
+                &nbsp;|&nbsp;
+                CV Ε. Χριστοδούλου: 
+                <a href="https://evangeloschr.github.io/GE1_MyCV_Christodoulou/" target="_blank">https://evangeloschr.github.io/GE1_MyCV_Christodoulou/</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
