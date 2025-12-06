@@ -1,168 +1,282 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grafici - Dashboard Umidità</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-		body {
-			background-color: rgb(238, 238, 237);
-			color: #241e1d;
-		}
+//------------------------------------------------------------
+// appumidit.js (ΝΕΑ ΔΙΟΡΘΩΜΕΝΗ ΕΚΔΟΣΗ)
+//------------------------------------------------------------
 
-		/* Banner */
-		.banner {
-			background-color: rgb(188, 173, 175);
-			padding: 20px 10px;
-			margin-bottom: 20px;
-			border-bottom: 2px solid #dee2e6;
-			width: 100%;
-			color: #241e1d;
-		}
+// Ανανέωση δεδομένων όταν πατηθεί το εικονίδιο
+document.getElementById('update-data').addEventListener('click', function() {
+    loadDataAndUpdateCharts();
+});
 
-		.banner-title {
-			font-size: 24px;
-			font-weight: bold;
-		}
+//==========================================================
+// Βοηθητική συνάρτηση: Μετατρέπει "dd/MM/yyyy HH:mm:ss" → Date()
+//==========================================================
+function parseDateString(dateString) {
+    try {
+        const [datePart, timePart] = dateString.split(" ");
+        const [day, month, year]   = datePart.split("/").map(Number);
 
-		/* Icone di navigazione */
-		.nav-item img {
-			width: 24px;
-			height: 24px;
-			display: inline-block;
-			filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-		}
+        let hours = 0, minutes = 0, seconds = 0;
 
-		/* Contenitore grafico */
-		.chart-container {
-			position: relative;
-			height: 400px;
-			width: 100%;
-		}
+        if (timePart) {
+            [hours, minutes, seconds] = timePart.split(":").map(Number);
+        }
 
-		/* Navigazione */
-		nav {
-			display: flex;
-			justify-content: flex-end;
-			align-items: center;
-			flex-wrap: wrap; /* Consente il wrapping solo quando necessario */
-		}
+        return new Date(year, month - 1, day, hours, minutes, seconds);
+    }
+    catch (err) {
+        console.error("Σφάλμα parseDateString:", dateString);
+        return new Date(NaN);
+    }
+}
 
-		.nav-item {
-			margin-left: 20px;
-			display: inline-block;
-			vertical-align: middle;
-			text-align: center;
-		}
+//==========================================================
+// Φόρτωμα δεδομένων από Google Script
+//==========================================================
+function loadDataAndUpdateCharts() {
 
-		/* Media query per schermi piccoli */
-		@media (max-width: 576px) {
-			nav {
-				justify-content: center; /* Centra le icone in modalità mobile */
-			}
-			.nav-item {
-				margin-left: 10px; /* Riduce il margine per adattarsi meglio */
-				margin-bottom: 10px; /* Aggiunge spazio verticale tra le righe */
-			}
-		}
+    const url = "https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read";
 
-		/* Footer */
-		footer {
-			margin-top: 50px;
-			padding: 10px 0;
-			text-align: center;
-			font-size: 12px;
-			color: #241e1d;
-		}
+    fetch(url)
+        .then(r => r.json())
+        .then(data => processAndDisplayData(data))
+        .catch(err => console.error("Σφάλμα fetch:", err));
+}
 
-		footer img {
-			margin: 0 10px;
-			width: 24px;
-			height: 24px;
-			cursor: pointer;
-			filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-		}
+//==========================================================
+// Επεξεργασία δεδομένων
+//==========================================================
+function processAndDisplayData(data) {
 
-    </style>
-</head>
+    const processed = data.map(row => {
 
-<body>
-    <!-- Banner -->
-    <div class="banner">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-6">
-                    <div class="banner-title">Dashboard Umidità</div>
-                    <div class="banner-date" id="last-update">Ultimo aggiornamento: --/--/---- --:--:--</div>
-                </div>
-                <div class="col-6 text-right">
-                    <nav>
-                        <a class="nav-item" href="#" id="update-data">
-                            <img src="arrows-counter-clockwise.svg" alt="Aggiorna" title="Aggiorna Dati">
-                        </a>
-                        <a class="nav-item" href="index.html">
-                            <img src="speedometer.svg" alt="Home" title="Dashboard">
-                        </a>
-                        <a class="nav-item" href="charts.html">
-                            <img src="thermometer.svg" alt="Grafici" title="Grafici temperatura">
-                        </a>
-						<a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Grafici" title="Grafici pressione barometrica">
-                        </a>
-						<a class="nav-item" href="aircharts.html">
-                            <img src="fan.svg" alt="Grafici" title="Grafici qualità aria">
-                        </a>
-                        <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="About This Site">
-                        </a>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
+        // --- Υγρασία ---
+        let hum = Number(row["Umidità"]);
+        if (isNaN(hum)) {
+            hum = NaN;
+        }
 
-    <div class="container-fluid">
-        <div class="row mb-4">
-            <div class="col-12 text-center">
-                <h4 id="latest-temp">Ultima umidità rilevata: -- %</h4>
-            </div>
-        </div>
-        <div class="row mb-4">
-            <div class="col-12 text-center">
-                <select id="timeFilter" class="form-control w-35 mx-auto">
-                    <option value="all">Tutti i dati</option>
-                    <option value="last24h">24h</option>
-                    <option value="last12h">12h</option>
-                    <option value="last6h">6h</option>
-                    <option value="last3h">3h</option>
-					<option value="last1h">1h</option>
-                </select>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <div class="chart-container">
-                    <canvas id="minutoChart"></canvas>
-                </div>
-            </div>
-            <div class="col-12 mt-4">
-                <div class="chart-container">
-                    <canvas id="oraChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+        // --- Ημερομηνία ---
+        const parsed = parseDateString(row.Data);
 
-    <footer>
-        <p>About me</p>
-        <a href="https://github.com/GarauGarau"><img src="github-logo.svg" alt="GitHub Logo"></a>
-        <a href="https://x.com/alessiogarau22"><img src="x-logo.svg" alt="X (Twitter) Logo"></a>
-        <a href="https://alessiogarau.io"><img src="user.svg" alt="Personal Website"></a>
-    </footer>
+        return {
+            ...row,
+            Data: parsed,
+            Umidità: hum
+        };
+    });
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="appumidit.js"></script>
-</body>
-</html>
+    // Φιλτράρισμα ανά φίλτρο χρόνου
+    const filter = document.getElementById("timeFilter").value;
+    const filtered = filterDataByTime(processed, filter);
+
+    if (!filtered.length) {
+        document.getElementById("latest-temp").textContent =
+            "Δεν υπάρχουν διαθέσιμα δεδομένα";
+        return;
+    }
+
+    // Τελευταίο δείγμα
+    const last = filtered[filtered.length - 1];
+    document.getElementById("latest-temp").textContent =
+        `Τελευταία υγρασία: ${last.Umidità.toFixed(2)} %`;
+
+    // Ενημέρωση timestamp εμφάνισης
+    const now = new Date().toLocaleString("el-GR", { hour12: false });
+    document.getElementById("last-update").textContent =
+        `Τελευταία ενημέρωση: ${now}`;
+
+    //------------------------------------------------------
+    // LABELS **24ωρης μορφής** για το λεπτό-λεπτό γράφημα
+    //------------------------------------------------------
+    const labelsMinuto = filtered.map(row =>
+        row.Data.toLocaleTimeString("el-GR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        })
+    );
+
+    const dataMinuto = filtered.map(row => row.Umidità);
+
+    //------------------------------------------------------
+    // Ωριαία ομαδοποίηση
+    //------------------------------------------------------
+    const hourly = aggregateHourly(filtered);
+
+    const labelsOra = hourly.map(h => h.label);
+    const dataOra   = hourly.map(h => h.meanHum);
+    const ciUpper   = hourly.map(h => h.ciUpper);
+    const ciLower   = hourly.map(h => h.ciLower);
+
+    //------------------------------------------------------
+    // Δημιουργία γραφημάτων
+    //------------------------------------------------------
+    updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower);
+}
+
+//==========================================================
+// Φιλτράρισμα ανά 1h / 3h / 6h / 12h / 24h
+//==========================================================
+function filterDataByTime(data, filter) {
+
+    const lastTS = data[data.length - 1].Data.getTime();
+    let frame = 0;
+
+    switch (filter) {
+        case "last24h": frame = 24 * 3600 * 1000; break;
+        case "last12h": frame = 12 * 3600 * 1000; break;
+        case "last6h":  frame =  6 * 3600 * 1000; break;
+        case "last3h":  frame =  3 * 3600 * 1000; break;
+        case "last1h":  frame =  1 * 3600 * 1000; break;
+        default: return data;
+    }
+
+    return data.filter(r => r.Data.getTime() >= lastTS - frame);
+}
+
+//==========================================================
+// Ομαδοποίηση ανά ώρα με CI
+//==========================================================
+function aggregateHourly(data) {
+
+    const groups = {};
+
+    data.forEach(row => {
+        const d = row.Data;
+
+        const date = d.toLocaleDateString("el-GR");
+        const hour = d.getHours().toString().padStart(2, "0");
+
+        const key = `${date} ${hour}:00`;
+
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(row.Umidità);
+    });
+
+    return Object.keys(groups).map(key => {
+        const values = groups[key];
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
+
+        let stderr = 0;
+        if (values.length > 1) {
+            const variance =
+                values.reduce((s, v) => s + (v - mean) ** 2, 0) / (values.length - 1);
+            stderr = Math.sqrt(variance) / Math.sqrt(values.length);
+        }
+
+        const ci = 1.96 * stderr;
+
+        return {
+            label: key,
+            meanHum: mean,
+            ciUpper: mean + ci,
+            ciLower: mean - ci
+        };
+    });
+}
+
+//==========================================================
+// Δημιουργία ΓΡΑΦΗΜΑΤΩΝ
+//==========================================================
+function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower) {
+
+    const ctxMin = document.getElementById("minutoChart").getContext("2d");
+    const ctxOra = document.getElementById("oraChart").getContext("2d");
+
+    if (window.minutoChart) window.minutoChart.destroy();
+    if (window.oraChart) window.oraChart.destroy();
+
+    //------------------------------------------------------
+    // Γράφημα λεπτό-λεπτό (πρώτο)
+    //------------------------------------------------------
+    window.minutoChart = new Chart(ctxMin, {
+        type: "line",
+        data: {
+            labels: labelsMinuto,
+            datasets: [{
+                label: "Υγρασία",
+                data: dataMinuto,
+                borderColor: "rgba(75, 192, 192, 1)",
+                tension: 0.1,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }},
+            scales: {
+                x: {
+                    ticks: {
+                        callback: (value, index) =>
+                            index % 10 === 0 ? labelsMinuto[value] : ""
+                    }
+                },
+                y: {
+                    title: { display: true, text: "Υγρασία (%)" }
+                }
+            }
+        }
+    });
+
+    //------------------------------------------------------
+    // Γράφημα ωριαίας μέσης υγρασίας + CI
+    //------------------------------------------------------
+    window.oraChart = new Chart(ctxOra, {
+        type: "line",
+        data: {
+            labels: labelsOra,
+            datasets: [
+                {
+                    label: "Μέση υγρασία ανά ώρα",
+                    data: dataOra,
+                    borderColor: "rgba(153, 102, 255, 1)",
+                    tension: 0.1,
+                    pointRadius: 0
+                },
+                {
+                    label: "95% CI",
+                    data: ciUpper,
+                    borderColor: "rgba(255, 159, 64, 0.2)",
+                    backgroundColor: "rgba(255, 159, 64, 0.2)",
+                    fill: "-1",
+                    pointRadius: 0
+                },
+                {
+                    label: "95% CI",
+                    data: ciLower,
+                    borderColor: "rgba(255, 159, 64, 0.2)",
+                    backgroundColor: "rgba(255, 159, 64, 0.2)",
+                    fill: "origin",
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }},
+            scales: {
+                x: {
+                    ticks: {
+                        callback: (value, index) =>
+                            index % 2 === 0 ? labelsOra[value] : ""
+                    }
+                },
+                y: {
+                    title: { display: true, text: "Υγρασία (%)" }
+                }
+            }
+        }
+    });
+}
+
+//==========================================================
+// Εκκίνηση
+//==========================================================
+document.addEventListener("DOMContentLoaded", function() {
+    loadDataAndUpdateCharts();
+
+    document.getElementById("update-data").addEventListener("click", loadDataAndUpdateCharts);
+    document.getElementById("timeFilter").addEventListener("change", loadDataAndUpdateCharts);
+});
