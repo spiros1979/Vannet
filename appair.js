@@ -85,9 +85,18 @@ function processAndDisplayData(data) {
             'Τελευταία τιμή AIQ: --';
     }
 
-    // Τελευταία ενημέρωση (ώρα browser ή, αν θες, μπορεί να γίνει από Data)
-    document.getElementById('last-update').textContent =
-        `Τελευταία ενημέρωση: ${new Date().toLocaleString('el-GR', { hour12: false })}`;
+    // Τελευταία λήψη δεδομένων (από το τελευταίο row του filteredData)
+    const lastSample = filteredData[filteredData.length - 1];
+
+    const d = lastSample.Data instanceof Date ? lastSample.Data : new Date(lastSample.Data);
+    const lastUpdateTime = isNaN(d.getTime())
+        ? String(lastSample.Data)
+        : d.toLocaleString('el-GR', { hour12: false });
+
+    const el = document.getElementById('last-update');
+    if (el) {
+        el.textContent = `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+    }
 
     // Labels + τιμές για 1ο γράφημα (λεπτό-λεπτό AIQ)
     const labelsMinuto = filteredData.map(row =>
