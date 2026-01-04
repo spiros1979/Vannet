@@ -1,8 +1,3 @@
-// Κουμπί ανανέωσης (εικονίδιο)
-document.getElementById('update-data').addEventListener('click', function () {
-    loadDataAndUpdateCharts();
-});
-
 // -------------------------------
 // Φόρτωμα δεδομένων από Apps Script
 // -------------------------------
