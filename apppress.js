@@ -79,14 +79,22 @@ function processAndDisplayData(data) {
     document.getElementById('latest-temp').textContent =
         `Τελευταία πίεση: ${latestPress.toFixed(2)} hPa`;
 
-    // 5) Τελευταία ενημέρωση (ώρα συστήματος)
-    if (rows.length > 0) {
-    const lastRow = rows[rows.length - 1];
-    const lastUpdateTime = lastRow[0]; // timestamp από Sheet
+    
+    // 5) Τελευταία λήψη δεδομένων (από filteredDataMinuto)
+    if (filteredDataMinuto.length > 0) {
+    const last = filteredDataMinuto[filteredDataMinuto.length - 1];
 
-    document.getElementById('last-update').textContent =
-        `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+    const d = last.Data instanceof Date ? last.Data : new Date(last.Data);
+    const lastUpdateTime = isNaN(d.getTime())
+        ? String(last.Data)
+        : d.toLocaleString('el-GR', { hour12: false });
+
+    const el = document.getElementById('last-update');
+    if (el) {
+        el.textContent = `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+        }
     }
+
 
     // 6) Δεδομένα για 1ο γράφημα (ανά δείγμα)
     const labelsMinuto = filteredDataMinuto.map(
