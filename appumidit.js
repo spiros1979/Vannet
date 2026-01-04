@@ -115,10 +115,20 @@ function processAndDisplayData(data) {
     document.getElementById("latest-temp").textContent =
         `Τελευταία υγρασία: ${last.Umidità.toFixed(2)} %`;
 
-    // 3.4 Timestamp ενημέρωσης
-    const now = new Date().toLocaleString("el-GR", { hour12: false });
-    document.getElementById("last-update").textContent =
-        `Τελευταία ενημέρωση: ${now}`;
+    // 3.4 Timestamp Τελευταία λήψη δεδομένων (από filteredDataMinuto)
+    if (filteredDataMinuto.length > 0) {
+    const last = filteredDataMinuto[filteredDataMinuto.length - 1];
+
+    const d = last.Data instanceof Date ? last.Data : new Date(last.Data);
+    const lastUpdateTime = isNaN(d.getTime())
+        ? String(last.Data)
+        : d.toLocaleString("el-GR", { hour12: false });
+
+    const el = document.getElementById("last-update");
+    if (el) {
+        el.textContent = `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+            }    
+    }
 
     // 3.5 Labels & data για λεπτό-λεπτό
     const labelsMinuto = filtered.map(row =>
