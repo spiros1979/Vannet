@@ -80,9 +80,13 @@ function processAndDisplayData(data) {
         `Τελευταία πίεση: ${latestPress.toFixed(2)} hPa`;
 
     // 5) Τελευταία ενημέρωση (ώρα συστήματος)
-    const lastUpdateTime = new Date().toLocaleString('el-GR', { hour12: false });
+    if (rows.length > 0) {
+    const lastRow = rows[rows.length - 1];
+    const lastUpdateTime = lastRow[0]; // timestamp από Sheet
+
     document.getElementById('last-update').textContent =
-        `Τελευταία ενημέρωση: ${lastUpdateTime}`;
+        `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+    }
 
     // 6) Δεδομένα για 1ο γράφημα (ανά δείγμα)
     const labelsMinuto = filteredDataMinuto.map(
