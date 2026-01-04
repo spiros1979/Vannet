@@ -115,19 +115,19 @@ function processAndDisplayData(data) {
     document.getElementById("latest-temp").textContent =
         `Τελευταία υγρασία: ${last.Umidità.toFixed(2)} %`;
 
-    // 3.4 Timestamp Τελευταία λήψη δεδομένων (από filteredDataMinuto)
-    if (filteredDataMinuto.length > 0) {
-    const last = filteredDataMinuto[filteredDataMinuto.length - 1];
+    // 3.4 Timestamp Τελευταία λήψη δεδομένων (από filtered)
+    if (filtered.length > 0) {
+        const lastSample = filtered[filtered.length - 1];
 
-    const d = last.Data instanceof Date ? last.Data : new Date(last.Data);
-    const lastUpdateTime = isNaN(d.getTime())
-        ? String(last.Data)
-        : d.toLocaleString("el-GR", { hour12: false });
+        const d = lastSample.Data instanceof Date ? lastSample.Data : new Date(lastSample.Data);
+        const lastUpdateTime = isNaN(d.getTime())
+            ? String(lastSample.Data)
+            : d.toLocaleString("el-GR", { hour12: false });
 
-    const el = document.getElementById("last-update");
-    if (el) {
-        el.textContent = `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
-            }    
+        const el = document.getElementById("last-update");
+        if (el) {
+            el.textContent = `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+        }
     }
 
     // 3.5 Labels & data για λεπτό-λεπτό
