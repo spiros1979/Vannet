@@ -3,7 +3,7 @@
 const DATA_URL = "https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read";
 
 // 🔧 άλλαξε το όπως θες
-const TANK1_CAPACITY_LT = 1000;
+const TANK1_CAPACITY_LT = 3000;
 
 function parseDateString(dateString) {
   if (!dateString) return new Date(NaN);
