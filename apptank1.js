@@ -1,6 +1,9 @@
-// apptank1.js
+// apptank1.js — Δεξαμενή 1 (D1) σε λίτρα
 
 const DATA_URL = "https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read";
+
+// 🔧 άλλαξε το όπως θες
+const TANK1_CAPACITY_LT = 1000;
 
 function parseDateString(dateString) {
   if (!dateString) return new Date(NaN);
@@ -13,25 +16,21 @@ function parseDateString(dateString) {
   return new Date(year, (month || 1) - 1, day || 1, hours, minutes, seconds);
 }
 
-// Πιθανά keys που μπορεί να έχεις στο Apps Script για τη Δεξαμενή 1
-function getTank1Value(row) {
-  const candidates = [
-    "tank1", "tank_1", "tank1_level", "tank1Level", "Tank1",
-    "deksameni1", "dexameni1", "reservoir1", "level1"
-  ];
+function getTank1Liters(row) {
+  const v = Number(String(row?.D1 ?? "").replace(",", "."));
+  return Number.isFinite(v) ? v : NaN;
+}
 
-  for (const k of candidates) {
-    if (row && row[k] != null && row[k] !== "") {
-      const v = Number(String(row[k]).replace(",", "."));
-      if (!isNaN(v)) return v;
-    }
-  }
-  return NaN;
+function calcStats(arr) {
+  if (!arr.length) return { min: NaN, max: NaN, avg: NaN };
+  const min = Math.min(...arr);
+  const max = Math.max(...arr);
+  const avg = arr.reduce((s, v) => s + v, 0) / arr.length;
+  return { min, max, avg };
 }
 
 function filterDataByTime(data, filter) {
   if (!data.length) return [];
-
   const lastTS = data[data.length - 1].Data.getTime();
   if (isNaN(lastTS)) return [];
 
@@ -42,7 +41,7 @@ function filterDataByTime(data, filter) {
     case "last6h":  windowMs =  6 * 3600000; break;
     case "last3h":  windowMs =  3 * 3600000; break;
     case "last1h":  windowMs =  1 * 3600000; break;
-    default: return data; // all
+    default: return data;
   }
 
   const fromTS = lastTS - windowMs;
@@ -51,48 +50,56 @@ function filterDataByTime(data, filter) {
 
 function aggregateHourly(data) {
   const grouped = {};
-
-  data.forEach(r => {
-    if (!(r.Data instanceof Date) || isNaN(r.Data.getTime())) return;
-    if (!Number.isFinite(r.level)) return;
+  for (const r of data) {
+    if (!(r.Data instanceof Date) || isNaN(r.Data.getTime())) continue;
+    if (!Number.isFinite(r.liters)) continue;
 
     const date = r.Data.toLocaleDateString("el-GR");
     const hour = String(r.Data.getHours()).padStart(2, "0");
     const key = `${date} ${hour}:00`;
 
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(r.level);
-  });
+    (grouped[key] ||= []).push(r.liters);
+  }
 
-  return Object.keys(grouped).map(key => {
-    const arr = grouped[key];
+  return Object.keys(grouped).map(label => {
+    const arr = grouped[label];
     const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-    return { label: key, mean };
+    return { label, mean };
   });
 }
 
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function litersToPercent(liters, capacity) {
+  if (!Number.isFinite(liters) || !Number.isFinite(capacity) || capacity <= 0) return NaN;
+  return (liters / capacity) * 100;
+}
+
 async function loadAndRender() {
-  const statusEl = document.getElementById("status");
-  if (statusEl) statusEl.textContent = "Φόρτωση δεδομένων…";
+  setText("status", "Φόρτωση δεδομένων…");
 
   const res = await fetch(DATA_URL);
-  const data = await res.json();
+  const raw = await res.json();
 
-  if (!Array.isArray(data) || data.length === 0) {
-    if (statusEl) statusEl.textContent = "Δεν βρέθηκαν δεδομένα.";
+  if (!Array.isArray(raw) || raw.length === 0) {
+    setText("status", "Δεν βρέθηκαν δεδομένα.");
     return;
   }
 
-  // Μετατρέπουμε σε {Data: Date, level: number}
-  let processed = data.map(row => ({
+  let processed = raw.map(row => ({
     Data: parseDateString(row.Data),
-    level: getTank1Value(row)
+    liters: getTank1Liters(row)
   }));
 
-  processed = processed.filter(r => r.Data instanceof Date && !isNaN(r.Data.getTime()) && Number.isFinite(r.level));
+  processed = processed.filter(r =>
+    r.Data instanceof Date && !isNaN(r.Data.getTime()) && Number.isFinite(r.liters)
+  );
 
   if (!processed.length) {
-    if (statusEl) statusEl.textContent = "Δεν υπάρχουν έγκυρες τιμές δεξαμενής 1 (έλεγξε το όνομα πεδίου στο Apps Script).";
+    setText("status", "Δεν υπάρχουν έγκυρες τιμές D1.");
     return;
   }
 
@@ -100,61 +107,85 @@ async function loadAndRender() {
   const filtered = filterDataByTime(processed, filter);
 
   if (!filtered.length) {
-    if (statusEl) statusEl.textContent = "Δεν υπάρχουν δεδομένα στο επιλεγμένο διάστημα.";
+    setText("status", "Δεν υπάρχουν δεδομένα στο επιλεγμένο διάστημα.");
     return;
   }
 
+  // τελευταίο δείγμα
   const last = filtered[filtered.length - 1];
-  document.getElementById("latest-level").textContent = `${last.level.toFixed(0)}%`;
+  const pct = litersToPercent(last.liters, TANK1_CAPACITY_LT);
 
-  const lastUpdate = last.Data.toLocaleString("el-GR", { hour12: false });
-  document.getElementById("last-update").textContent = `Τελευταία λήψη δεδομένων: ${lastUpdate}`;
+  setText(
+    "latest-level",
+    `${last.liters.toFixed(0)} lt (${Number.isFinite(pct) ? pct.toFixed(0) : "--"}%)`
+  );
 
-  // λεπτό-λεπτό
-  const labelsMin = filtered.map(r => r.Data.toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit", hour12: false }));
-  const valuesMin = filtered.map(r => r.level);
+  setText("last-update", `Τελευταία λήψη δεδομένων: ${last.Data.toLocaleString("el-GR", { hour12: false })}`);
 
-  // ωριαίο
+  // στατιστικά σε lt
+  const litersArr = filtered.map(r => r.liters);
+  const st = calcStats(litersArr);
+
+  setText("level-min", `Ελάχιστο: ${Number.isFinite(st.min) ? st.min.toFixed(0) : "--"} lt`);
+  setText("level-avg", `Μ. όρος: ${Number.isFinite(st.avg) ? st.avg.toFixed(0) : "--"} lt`);
+  setText("level-max", `Μέγιστο: ${Number.isFinite(st.max) ? st.max.toFixed(0) : "--"} lt`);
+
+  // γραφήματα
+  const labelsMin = filtered.map(r =>
+    r.Data.toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit", hour12: false })
+  );
+  const valuesMin = filtered.map(r => r.liters);
+
   const hourly = aggregateHourly(filtered);
   const labelsHr = hourly.map(x => x.label);
   const valuesHr = hourly.map(x => x.mean);
 
   renderCharts(labelsMin, valuesMin, labelsHr, valuesHr);
 
-  if (statusEl) statusEl.textContent = `Δείγματα: ${filtered.length}`;
+  setText("status", `Δείγματα: ${filtered.length}`);
 }
 
 function renderCharts(labelsMin, valuesMin, labelsHr, valuesHr) {
-  const minCtx = document.getElementById("minutoChart").getContext("2d");
-  const hrCtx  = document.getElementById("oraChart").getContext("2d");
+  const minCanvas = document.getElementById("minutoChart");
+  const hrCanvas = document.getElementById("oraChart");
+  if (!minCanvas || !hrCanvas) return;
+
+  const minCtx = minCanvas.getContext("2d");
+  const hrCtx  = hrCanvas.getContext("2d");
 
   if (window.minutoChart && typeof window.minutoChart.destroy === "function") window.minutoChart.destroy();
   if (window.oraChart && typeof window.oraChart.destroy === "function") window.oraChart.destroy();
 
   window.minutoChart = new Chart(minCtx, {
     type: "line",
-    data: { labels: labelsMin, datasets: [{ label: "Στάθμη (%)", data: valuesMin, borderWidth: 2, tension: 0.1, pointRadius: 0 }] },
+    data: {
+      labels: labelsMin,
+      datasets: [{ label: "Στάθμη (lt)", data: valuesMin, borderWidth: 2, tension: 0.1, pointRadius: 0 }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         x: { ticks: { callback: (v, i) => (i % 10 === 0 ? labelsMin[i] : "") } },
-        y: { title: { display: true, text: "Στάθμη (%)" }, min: 0, max: 100 }
+        y: { title: { display: true, text: "Στάθμη (lt)" } }
       }
     }
   });
 
   window.oraChart = new Chart(hrCtx, {
     type: "line",
-    data: { labels: labelsHr, datasets: [{ label: "Μέση στάθμη ανά ώρα (%)", data: valuesHr, borderWidth: 2, tension: 0.1, pointRadius: 0 }] },
+    data: {
+      labels: labelsHr,
+      datasets: [{ label: "Μέση στάθμη ανά ώρα (lt)", data: valuesHr, borderWidth: 2, tension: 0.1, pointRadius: 0 }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         x: { ticks: { callback: (v, i) => (i % 2 === 0 ? labelsHr[i] : "") } },
-        y: { title: { display: true, text: "Στάθμη (%)" }, min: 0, max: 100 }
+        y: { title: { display: true, text: "Στάθμη (lt)" } }
       }
     }
   });
