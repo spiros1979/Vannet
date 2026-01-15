@@ -44,10 +44,13 @@
     .big-value { font-size: 34px; margin: 0; }
     .subtle { font-size: 13px; color: #555; margin-top: 6px; }
 
-    .chart-wrap { height: 320px; }
-    canvas { width: 100% !important; height: 100% !important; }
+    .stats-row { display: flex; justify-content: space-between; margin-top: 10px; font-size: 14px; color: #555; }
+    .stats-row span { display: inline-block; }
 
     .controls { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+
+    .chart-wrap { height: 320px; }
+    canvas { width: 100% !important; height: 100% !important; }
   </style>
 </head>
 
@@ -62,6 +65,7 @@
 
         <div class="col-6 text-right">
           <nav>
+            <a class="nav-item" href="index.html"><img src="info.svg" alt="Αρχική" title="Επιστροφή στην αρχική"></a>
 
             <a class="nav-item" href="charts.html"><img src="thermometer.svg" alt="Θερμοκρασία" title="Γραφήματα θερμοκρασίας"></a>
             <a class="nav-item" href="humcharts.html"><img src="drop-half-bottom.svg" alt="Υγρασία" title="Γραφήματα υγρασίας"></a>
@@ -82,9 +86,15 @@
 
     <div class="counter">
       <h3>Τρέχουσα στάθμη (Δεξαμενή 1)</h3>
-      <p id="latest-level" class="big-value">--%</p>
+      <p id="latest-level" class="big-value">-- lt (--%)</p>
 
-      <div class="controls mt-2">
+      <div class="stats-row">
+        <span id="level-min">Ελάχιστο: -- lt</span>
+        <span id="level-avg">Μ. όρος: -- lt</span>
+        <span id="level-max">Μέγιστο: -- lt</span>
+      </div>
+
+      <div class="controls mt-3">
         <label for="timeFilter" class="mb-0">Διάστημα:</label>
         <select id="timeFilter" class="form-control" style="max-width: 220px;">
           <option value="all">Όλα</option>
