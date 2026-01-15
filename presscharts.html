@@ -116,22 +116,6 @@
             background-color: #E0AA14;   /* Κάτω όριο 95% CI */
         }
 
-        /* Footer */
-        footer {
-            margin-top: 50px;
-            padding: 10px 0;
-            text-align: center;
-            font-size: 12px;
-            color: #241e1d;
-        }
-
-        footer img {
-            margin: 0 10px;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-        }
 
     </style>
 </head>
@@ -231,13 +215,19 @@
         </div>
     </div>
 
-    <!-- Footer: μόνο το δικό σου GitHub -->
-    <footer>
-        <p>Σχετικά με εμένα</p>
-        <a href="https://github.com/spiros1979">
-            <img src="github-logo.svg" alt="GitHub Logo">
-        </a>
-    </footer>
+     <!-- Footer placeholder -->
+    <div id="site-footer"></div>
+
+    <!-- 1) Φόρτωσε το κοινό footer -->
+    <script>
+        fetch('footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const el = document.getElementById('site-footer');
+                if (el) el.innerHTML = html;
+            })
+            .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+    </script>
 
     <!-- Βιβλιοθήκη PapaParse (όπως στο upstream) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
