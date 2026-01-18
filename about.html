@@ -82,13 +82,7 @@
         figcaption {
             color: rgb(110, 65, 69);
         }
-        footer {
-            margin-top: 50px;
-            padding: 10px 0;
-            text-align: center;
-            font-size: 14px;
-            color: #241e1d;
-        }
+        
     </style>
 </head>
 <body>
@@ -226,32 +220,19 @@
             </p>
         </div>
 
-        <footer>
-            <p>
-                <img src="Eap.png" alt="ΕΑΠ" style="width:50%; max-width:200px; height:auto; display:block; margin:0 auto 10px auto;">
-                Vannet – ομαδικό project στο πλαίσιο μεταπτυχιακών σπουδών ΕΑΠ ΠΜΣ ΣΔΥ - ΣΔΥ60 2025/2026.
-            </p>
+         <!-- Footer placeholder -->
+        <div id="site-footer"></div>
 
-            <p>
-                Σ. Ζερβός: 
-                <a href="https://github.com/spiros1979" target="_blank">GitHub</a> &nbsp;|&nbsp;
-                Χ. Σπένδας: 
-                <a href="https://github.com/Christos-SP" target="_blank">GitHub</a> &nbsp;|&nbsp;
-                Ε. Χριστοδούλου: 
-                <a href="https://github.com/EvangelosChr" target="_blank">GitHub</a>
-            </p>
-
-            <p style="font-size:13px;">
-                CV Σ. Ζερβού: 
-                <a href="https://spiros1979.github.io/markdown-cv/" target="_blank">https://spiros1979.github.io/markdown-cv/</a>
-                &nbsp;|&nbsp;
-                CV Χ. Σπένδα: 
-                <a href="https://christos-sp.github.io/myCV/" target="_blank">https://christos-sp.github.io/myCV/</a>
-                &nbsp;|&nbsp;
-                CV Ε. Χριστοδούλου: 
-                <a href="https://evangeloschr.github.io/GE1_MyCV_Christodoulou/" target="_blank">https://evangeloschr.github.io/GE1_MyCV_Christodoulou/</a>
-            </p>
-        </footer>
-    </div>
+        <!-- 1) Φόρτωσε το κοινό footer -->
+        <script>
+        fetch('footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const el = document.getElementById('site-footer');
+                if (el) el.innerHTML = html;
+            })
+            .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+        </script>
+        </div>
 </body>
 </html>
