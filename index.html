@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNO R4 WiFi - BME680 </title>
+    <title>UNO R4 WiFi - BME680</title>
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             background-color: rgb(238, 238, 237);
@@ -51,13 +53,8 @@
         }
 
         @media (max-width: 576px) {
-            nav {
-                justify-content: center;
-            }
-            .nav-item {
-                margin-left: 10px;
-                margin-bottom: 10px;
-            }
+            nav { justify-content: center; }
+            .nav-item { margin-left: 10px; margin-bottom: 10px; }
         }
 
         /* Κουτάκια μετρήσεων */
@@ -88,11 +85,9 @@
             color: #555;
         }
 
-        .counter-details span {
-            display: inline-block;
-        }
+        .counter-details span { display: inline-block; }
 
-        /* Μπάρα IAQ με παστέλ χρώματα */
+        /* Μπάρα IAQ */
         .iaq-bar {
             position: relative;
             height: 20px;
@@ -110,7 +105,6 @@
             border-radius: 10px;
         }
 
-        /* Δείκτης IAQ (τριγωνάκι) */
         .iaq-indicator {
             position: absolute;
             top: -12px;
@@ -122,7 +116,6 @@
             border-bottom: none;
         }
 
-        /* Τιμή IAQ */
         #iaqValue {
             font-size: 25px;
             margin: 0;
@@ -130,7 +123,6 @@
             color: #241e1d;
         }
 
-        /* Λεκτική περιγραφή ποιότητας αέρα */
         #iaqQuality {
             font-size: 20px;
             margin: 0;
@@ -144,9 +136,7 @@
             color: inherit;
         }
 
-        .weather-widget {
-            text-align: left;
-        }
+        .weather-widget { text-align: left; }
 
         .weather-header {
             display: flex;
@@ -168,31 +158,102 @@
             font-size: 13px;
         }
 
-        .weather-day {
+        .weather-day { flex: 1; }
+        .weather-day span { display: block; line-height: 1.2; }
+        .weather-date { font-weight: 600; }
+        .weather-temp { font-size: 13px; }
+        .weather-desc { font-size: 12px; color: #555; }
+
+        /* =========================
+           ΝΕΟ: ΚΟΥΤΙ ΔΕΞΑΜΕΝΩΝ
+           ========================= */
+        .tank-mini-wrap {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 6px;
+        }
+
+        .tank-mini {
             flex: 1;
+            border-radius: 10px;
+            background: #f6f6f6;
+            border: 1px solid #e6e6e6;
+            padding: 10px 8px;
+            text-decoration: none;
+            color: inherit;
         }
 
-        .weather-day span {
-            display: block;
-            line-height: 1.2;
+        .tank-mini:hover {
+            box-shadow: 0 0 10px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
         }
 
-        .weather-date {
+        .tank-mini-title {
+            font-size: 14px;
             font-weight: 600;
+            margin-bottom: 6px;
+            color: #241e1d;
         }
 
-        .weather-temp {
-            font-size: 13px;
+        .tank-shape {
+            position: relative;
+            height: 120px;
+            border-radius: 12px 12px 10px 10px;
+            border: 2px solid rgba(36, 30, 29, 0.25);
+            background: white;
+            overflow: hidden;
         }
 
-        .weather-desc {
+        .tank-water {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 50%;
+            background: rgba(73, 180, 255, 0.45); /* γαλάζιο νερό */
+        }
+
+        .tank-water::before {
+            content: "";
+            position: absolute;
+            left: -10%;
+            top: -10px;
+            width: 120%;
+            height: 22px;
+            background: rgba(73, 180, 255, 0.65);
+            border-radius: 50%;
+            filter: blur(0.2px);
+        }
+
+        .tank-value {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 8px;
+            background: rgba(255,255,255,0.85);
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #241e1d;
+            border: 1px solid rgba(36,30,29,0.12);
+            white-space: nowrap;
+        }
+
+        .tank-sub {
+            margin-top: 6px;
             font-size: 12px;
             color: #555;
+            display: flex;
+            justify-content: space-between;
         }
 
-        /
+        .tank-sub span { display: inline-block; }
     </style>
 </head>
+
 <body>
     <!-- Banner -->
     <div class="banner">
@@ -202,6 +263,7 @@
                     <div class="banner-title">UNO R4 WiFi - BME680</div>
                     <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
                 </div>
+
                 <div class="col-6 text-right">
                     <nav>
                         <a class="nav-item" href="charts.html">
@@ -231,11 +293,11 @@
         </div>
     </div>
 
-    <!-- Κεντρικά κουτιά: Υγρασία / Θερμοκρασία / Πίεση -->
+    <!-- Κεντρικά κουτιά: Υγρασία / Θερμοκρασία / Πίεση / Δεξαμενές -->
     <div class="container">
         <div class="row">
             <!-- Υγρασία -->
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="counter">
                     <h3>Υγρασία</h3>
                     <canvas id="humidityChart"></canvas>
@@ -247,8 +309,9 @@
                     </div>
                 </div>
             </div>
+
             <!-- Θερμοκρασία -->
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="counter">
                     <h3>Θερμοκρασία</h3>
                     <canvas id="temperatureChart"></canvas>
@@ -260,8 +323,9 @@
                     </div>
                 </div>
             </div>
+
             <!-- Πίεση -->
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="counter">
                     <h3>Πίεση</h3>
                     <canvas id="pressureChart"></canvas>
@@ -273,6 +337,43 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ΝΕΟ: Δεξαμενές -->
+            <div class="col-md-3">
+                <div class="counter">
+                    <h3>Δεξαμενές</h3>
+
+                    <div class="tank-mini-wrap">
+                        <!-- Tank 1 -->
+                        <a class="tank-mini" href="tank1.html" title="Άνοιγμα σελίδας Δεξαμενής 1">
+                            <div class="tank-mini-title">Δεξαμενή 1</div>
+                            <div class="tank-shape">
+                                <div id="tank1-water" class="tank-water" style="height:0%;"></div>
+                                <div id="tank1-value" class="tank-value">-- lt</div>
+                            </div>
+                            <div class="tank-sub">
+                                <span id="tank1-pct">--%</span>
+                                <span>3000 lt</span>
+                            </div>
+                        </a>
+
+                        <!-- Tank 2 -->
+                        <a class="tank-mini" href="tank2.html" title="Άνοιγμα σελίδας Δεξαμενής 2">
+                            <div class="tank-mini-title">Δεξαμενή 2</div>
+                            <div class="tank-shape">
+                                <div id="tank2-water" class="tank-water" style="height:0%;"></div>
+                                <div id="tank2-value" class="tank-value">-- lt</div>
+                            </div>
+                            <div class="tank-sub">
+                                <span id="tank2-pct">--%</span>
+                                <span>500 lt</span>
+                            </div>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
         </div>
 
         <!-- Ποιότητα Αέρα (AIQ) & Widget Καιρού -->
@@ -325,10 +426,9 @@
         </div>
     </div>
 
-     <!-- Footer placeholder -->
+    <!-- Footer placeholder -->
     <div id="site-footer"></div>
 
-    <!-- 1) Φόρτωσε το κοινό footer -->
     <script>
         fetch('footer.html')
             .then(r => r.text())
@@ -340,40 +440,33 @@
     </script>
 
     <script>
-        // Βοηθητική συνάρτηση: μετατρέπει "dd/MM/yyyy HH:mm:ss" σε Date
+        // ----------- helpers -----------
         function parseDateString(dateString) {
             if (!dateString) return new Date(NaN);
             const [datePart, timePart] = dateString.split(' ');
             const [day, month, year] = datePart.split('/').map(Number);
             let [hours, minutes, seconds] = [0, 0, 0];
-            if (timePart) {
-                [hours, minutes, seconds] = timePart.split(':').map(Number);
-            }
+            if (timePart) [hours, minutes, seconds] = timePart.split(':').map(Number);
             return new Date(year, month - 1, day, hours, minutes, seconds);
         }
 
-        // Helper: min / max / avg με έλεγχο
         function calcStats(arr) {
-            if (!arr || arr.length === 0) {
-                return { min: NaN, max: NaN, avg: NaN };
-            }
+            if (!arr || arr.length === 0) return { min: NaN, max: NaN, avg: NaN };
             const min = Math.min(...arr);
             const max = Math.max(...arr);
             const avg = arr.reduce((sum, v) => sum + v, 0) / arr.length;
             return { min, max, avg };
         }
 
-        // Helper για εμφάνιση τιμών σε κουτιά (αν δεν έχει τιμή → "--")
         function formatStat(value, unit) {
             return Number.isFinite(value) ? `${value.toFixed(1)}${unit}` : `--${unit}`;
         }
 
-        // Mapping των weather codes του Open-Meteo σε ελληνική περιγραφή
         function describeWeatherCode(code) {
             code = Number(code);
             if (code === 0) return 'Καθαρός ουρανός';
             if (code === 1 || code === 2) return 'Λίγες νεφώσεις';
-            if (code === 3) return 'Συννεφιά';
+            if (code === 3) return 'Συννeφιά';
             if (code === 45 || code === 48) return 'Ομίχλη';
             if (code === 51 || code === 53 || code === 55) return 'Ψιλή βροχή';
             if (code === 61 || code === 63 || code === 65) return 'Βροχή';
@@ -385,11 +478,10 @@
             return 'Καιρικά φαινόμενα';
         }
 
-        // Widget καιρού με geolocation + Open-Meteo + reverse geocoding
         function initWeatherWidget() {
-            const statusEl   = document.getElementById('weatherStatus');
-            const locEl      = document.getElementById('weatherLocation');
-            const linkEl     = document.getElementById('weatherLink');
+            const statusEl = document.getElementById('weatherStatus');
+            const locEl = document.getElementById('weatherLocation');
+            const linkEl = document.getElementById('weatherLink');
 
             if (!navigator.geolocation) {
                 statusEl.textContent = 'Ο browser δεν υποστηρίζει γεωεντοπισμό.';
@@ -406,52 +498,33 @@
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
 
-                    // Link για Windy στο σημείο του χρήστη
-                    const windyUrl = `https://www.windy.com/?${lat.toFixed(3)},${lon.toFixed(3)}`;
-                    linkEl.href = windyUrl;
+                    linkEl.href = `https://www.windy.com/?${lat.toFixed(3)},${lon.toFixed(3)}`;
 
-                    // ---- Reverse geocoding για όνομα περιοχής (OpenStreetMap / Nominatim) ----
-                    const revUrl =
-                        `https://nominatim.openstreetmap.org/reverse` +
-                        `?lat=${lat}&lon=${lon}&format=json&accept-language=el`;
-
+                    const revUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=el`;
                     fetch(revUrl)
                         .then(r => r.json())
                         .then(place => {
                             const addr = place.address || {};
                             const parts = [];
-
-                            if (addr.suburb)       parts.push(addr.suburb);
+                            if (addr.suburb) parts.push(addr.suburb);
                             else if (addr.village) parts.push(addr.village);
-                            else if (addr.town)    parts.push(addr.town);
-                            else if (addr.city)    parts.push(addr.city);
-
-                            if (addr.state)   parts.push(addr.state);
+                            else if (addr.town) parts.push(addr.town);
+                            else if (addr.city) parts.push(addr.city);
+                            if (addr.state) parts.push(addr.state);
                             if (addr.country) parts.push(addr.country);
-
-                            if (parts.length > 0) {
-                                locEl.textContent = 'Περιοχή: ' + parts.join(', ');
-                            } else {
-                                locEl.textContent = 'Περιοχή: άγνωστη';
-                            }
+                            locEl.textContent = parts.length ? ('Περιοχή: ' + parts.join(', ')) : 'Περιοχή: άγνωστη';
                         })
-                        .catch(err => {
-                            console.error('Σφάλμα στο reverse geocoding:', err);
-                            locEl.textContent = 'Περιοχή: άγνωστη';
-                        });
+                        .catch(() => { locEl.textContent = 'Περιοχή: άγνωστη'; });
 
-                    // ---- Πρόγνωση από Open-Meteo ----
                     const apiUrl =
-                        `https://api.open-meteo.com/v1/forecast` +
-                        `?latitude=${lat}&longitude=${lon}` +
-                        `&daily=weathercode,temperature_2m_max,temperature_2m_min` +
-                        `&timezone=auto&forecast_days=3`;
+                        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+                        `&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=3`;
 
                     fetch(apiUrl)
                         .then(r => r.json())
                         .then(json => {
                             const daily = json.daily;
-                            if (!daily || !daily.time || daily.time.length === 0) {
+                            if (!daily || !daily.time || !daily.time.length) {
                                 statusEl.textContent = 'Δεν βρέθηκαν δεδομένα πρόγνωσης.';
                                 return;
                             }
@@ -460,33 +533,19 @@
                                 `Σήμερα: ${describeWeatherCode(daily.weathercode[0])}, ` +
                                 `${Math.round(daily.temperature_2m_min[0])}–${Math.round(daily.temperature_2m_max[0])}°C`;
 
-                            const days = daily.time.map((t, idx) => ({
-                                date: new Date(t),
-                                tmin: daily.temperature_2m_min[idx],
-                                tmax: daily.temperature_2m_max[idx],
-                                code: daily.weathercode[idx]
-                            }));
-
                             const options = { weekday: 'short', day: '2-digit', month: '2-digit' };
 
-                            [1, 2, 3].forEach((i, idx) => {
-                                const d = days[idx];
-                                if (!d) return;
-                                document.getElementById(`day${i}-date`).textContent =
-                                    d.date.toLocaleDateString('el-GR', options);
+                            for (let i = 1; i <= 3; i++) {
+                                const dt = new Date(daily.time[i - 1]);
+                                document.getElementById(`day${i}-date`).textContent = dt.toLocaleDateString('el-GR', options);
                                 document.getElementById(`day${i}-temp`).textContent =
-                                    `${Math.round(d.tmin)}–${Math.round(d.tmax)}°C`;
-                                document.getElementById(`day${i}-desc`).textContent =
-                                    describeWeatherCode(d.code);
-                            });
+                                    `${Math.round(daily.temperature_2m_min[i - 1])}–${Math.round(daily.temperature_2m_max[i - 1])}°C`;
+                                document.getElementById(`day${i}-desc`).textContent = describeWeatherCode(daily.weathercode[i - 1]);
+                            }
                         })
-                        .catch(err => {
-                            console.error('Σφάλμα από Open-Meteo:', err);
-                            statusEl.textContent = 'Πρόβλημα στη λήψη πρόγνωσης.';
-                        });
+                        .catch(() => { statusEl.textContent = 'Πρόβλημα στη λήψη πρόγνωσης.'; });
                 },
-                error => {
-                    console.warn('Σφάλμα geolocation:', error);
+                () => {
                     statusEl.textContent = 'Δεν δόθηκε άδεια για τοποθεσία.';
                     locEl.textContent = 'Περιοχή: άγνωστη';
                     linkEl.href = 'https://www.windy.com/';
@@ -495,10 +554,9 @@
             );
         }
 
-        // Ενημέρωση μπάρας IAQ (0–100) και κειμένων
         function updateIAQ(iaqValue) {
             const iaqIndicator = document.getElementById('iaqIndicator');
-            const iaqQuality   = document.getElementById('iaqQuality');
+            const iaqQuality = document.getElementById('iaqQuality');
             const iaqValueText = document.getElementById('iaqValue');
 
             if (!Number.isFinite(iaqValue)) {
@@ -511,17 +569,11 @@
             iaqValueText.textContent = `AIQ: ${iaqValue.toFixed(0)}`;
 
             let qualityText = '';
-            if (iaqValue <= 20) {
-                qualityText = 'Άριστη ποιότητα αέρα';
-            } else if (iaqValue <= 40) {
-                qualityText = 'Καλή ποιότητα αέρα';
-            } else if (iaqValue <= 60) {
-                qualityText = 'Μέτρια ποιότητα αέρα';
-            } else if (iaqValue <= 80) {
-                qualityText = 'Κακή ποιότητα αέρα';
-            } else {
-                qualityText = 'Πολύ κακή ποιότητα αέρα';
-            }
+            if (iaqValue <= 20) qualityText = 'Άριστη ποιότητα αέρα';
+            else if (iaqValue <= 40) qualityText = 'Καλή ποιότητα αέρα';
+            else if (iaqValue <= 60) qualityText = 'Μέτρια ποιότητα αέρα';
+            else if (iaqValue <= 80) qualityText = 'Κακή ποιότητα αέρα';
+            else qualityText = 'Πολύ κακή ποιότητα αέρα';
 
             iaqQuality.textContent = qualityText;
 
@@ -529,40 +581,57 @@
             iaqIndicator.style.left = `calc(${percentage}% - 1px)`;
         }
 
+        // ΝΕΟ: ενημέρωση mini tank widget
+        function updateTankMiniWidgets(d1, d2) {
+            const CAP1 = 3000;
+            const CAP2 = 500;
+
+            const d1Num = Number(d1);
+            const d2Num = Number(d2);
+
+            const pct1 = Number.isFinite(d1Num) ? Math.round((d1Num / CAP1) * 100) : NaN;
+            const pct2 = Number.isFinite(d2Num) ? Math.round((d2Num / CAP2) * 100) : NaN;
+
+            // Tank 1
+            document.getElementById('tank1-value').textContent =
+                Number.isFinite(d1Num) ? `${Math.round(d1Num)} lt` : '-- lt';
+            document.getElementById('tank1-pct').textContent =
+                Number.isFinite(pct1) ? `${pct1}%` : '--%';
+            document.getElementById('tank1-water').style.height =
+                Number.isFinite(pct1) ? `${Math.min(Math.max(pct1, 0), 100)}%` : '0%';
+
+            // Tank 2
+            document.getElementById('tank2-value').textContent =
+                Number.isFinite(d2Num) ? `${Math.round(d2Num)} lt` : '-- lt';
+            document.getElementById('tank2-pct').textContent =
+                Number.isFinite(pct2) ? `${pct2}%` : '--%';
+            document.getElementById('tank2-water').style.height =
+                Number.isFinite(pct2) ? `${Math.min(Math.max(pct2, 0), 100)}%` : '0%';
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
-            // Ξεκινάμε το widget καιρού
             initWeatherWidget();
 
-            // Διαβάζουμε τα δεδομένα από το Google Apps Script (mode=read)
             fetch('https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read')
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
-                    // ΠΙΝΑΚΕΣ με αριθμητικές τιμές, φιλτράρουμε μόνο έγκυρες
-                    const humidityValues = data
-                        .map(item => Number(item['Umidità']))
-                        .filter(v => !isNaN(v));
-                    const temperatureValues = data
-                        .map(item => Number(item['Temperatura']))
-                        .filter(v => !isNaN(v));
-                    const pressureValues = data
-                        .map(item => Number(item['Pressione']))
-                        .filter(v => !isNaN(v));
+                    // numeric arrays
+                    const humidityValues = data.map(item => Number(item['Umidità'])).filter(v => !isNaN(v));
+                    const temperatureValues = data.map(item => Number(item['Temperatura'])).filter(v => !isNaN(v));
+                    const pressureValues = data.map(item => Number(item['Pressione'])).filter(v => !isNaN(v));
 
-                    // Στατιστικά
-                    const humStats   = calcStats(humidityValues);
-                    const tempStats  = calcStats(temperatureValues);
+                    const humStats = calcStats(humidityValues);
+                    const tempStats = calcStats(temperatureValues);
                     const pressStats = calcStats(pressureValues);
 
-                    // Τελευταίες έγκυρες τιμές από τους πίνακες
-                    const lastHum   = humidityValues.length    ? humidityValues[humidityValues.length - 1]       : NaN;
-                    const lastTemp  = temperatureValues.length ? temperatureValues[temperatureValues.length - 1] : NaN;
-                    const lastPress = pressureValues.length    ? pressureValues[pressureValues.length - 1]       : NaN;
+                    const lastHum = humidityValues.length ? humidityValues[humidityValues.length - 1] : NaN;
+                    const lastTemp = temperatureValues.length ? temperatureValues[temperatureValues.length - 1] : NaN;
+                    const lastPress = pressureValues.length ? pressureValues[pressureValues.length - 1] : NaN;
 
-                    // Τελευταία γραμμή μόνο για ημερομηνία + AIQ
                     const lastRow = data[data.length - 1] || {};
                     const lastAIQ = Number(lastRow['aiq']);
 
-                    // Ενημέρωση κύριων τιμών
+                    // main values
                     document.getElementById('humidity').textContent =
                         Number.isFinite(lastHum) ? `${lastHum.toFixed(1)}%` : '--%';
                     document.getElementById('temperature').textContent =
@@ -570,156 +639,90 @@
                     document.getElementById('pressure').textContent =
                         Number.isFinite(lastPress) ? `${lastPress.toFixed(1)} hPa` : '-- hPa';
 
-                    // Ενημέρωση min / avg / max
-                    document.getElementById('humidity-min').textContent =
-                        `Ελάχιστο: ${formatStat(humStats.min, '%')}`;
-                    document.getElementById('humidity-avg').textContent =
-                        `Μ. όρος: ${formatStat(humStats.avg, '%')}`;
-                    document.getElementById('humidity-max').textContent =
-                        `Μέγιστο: ${formatStat(humStats.max, '%')}`;
+                    // stats
+                    document.getElementById('humidity-min').textContent = `Ελάχιστο: ${formatStat(humStats.min, '%')}`;
+                    document.getElementById('humidity-avg').textContent = `Μ. όρος: ${formatStat(humStats.avg, '%')}`;
+                    document.getElementById('humidity-max').textContent = `Μέγιστο: ${formatStat(humStats.max, '%')}`;
 
-                    document.getElementById('temperature-min').textContent =
-                        `Ελάχιστο: ${formatStat(tempStats.min, '°C')}`;
-                    document.getElementById('temperature-avg').textContent =
-                        `Μ. όρος: ${formatStat(tempStats.avg, '°C')}`;
-                    document.getElementById('temperature-max').textContent =
-                        `Μέγιστο: ${formatStat(tempStats.max, '°C')}`;
+                    document.getElementById('temperature-min').textContent = `Ελάχιστο: ${formatStat(tempStats.min, '°C')}`;
+                    document.getElementById('temperature-avg').textContent = `Μ. όρος: ${formatStat(tempStats.avg, '°C')}`;
+                    document.getElementById('temperature-max').textContent = `Μέγιστο: ${formatStat(tempStats.max, '°C')}`;
 
-                    document.getElementById('pressure-min').textContent =
-                        `Ελάχιστο: ${formatStat(pressStats.min, ' hPa')}`;
-                    document.getElementById('pressure-avg').textContent =
-                        `Μ. όρος: ${formatStat(pressStats.avg, ' hPa')}`;
-                    document.getElementById('pressure-max').textContent =
-                        `Μέγιστο: ${formatStat(pressStats.max, ' hPa')}`;
+                    document.getElementById('pressure-min').textContent = `Ελάχιστο: ${formatStat(pressStats.min, ' hPa')}`;
+                    document.getElementById('pressure-avg').textContent = `Μ. όρος: ${formatStat(pressStats.avg, ' hPa')}`;
+                    document.getElementById('pressure-max').textContent = `Μέγιστο: ${formatStat(pressStats.max, ' hPa')}`;
 
-                    // Τελευταία ενημέρωση – 24ωρο format
+                    // last update time
                     if (lastRow['Data']) {
-                        const date = parseDateString(lastRow['Data']);
-                        if (!isNaN(date.getTime())) {
-                            const formatted = date.toLocaleString('el-GR', { hour12: false });
+                        const dt = parseDateString(lastRow['Data']);
+                        if (!isNaN(dt.getTime())) {
                             document.getElementById('last-update').textContent =
-                                `Τελευταία ενημέρωση: ${formatted}`;
+                                `Τελευταία ενημέρωση: ${dt.toLocaleString('el-GR', { hour12: false })}`;
                         }
                     }
 
                     // AIQ
                     updateIAQ(lastAIQ);
 
-                    // Τελευταία 10 δείγματα για μίνι γραφήματα
-                    const recentHumidityValues    = humidityValues.slice(-10);
+                    // ΝΕΟ: Tanks (από D1 / D2)
+                    updateTankMiniWidgets(lastRow['D1'], lastRow['D2']);
+
+                    // mini charts (last 10)
+                    const recentHumidityValues = humidityValues.slice(-10);
                     const recentTemperatureValues = temperatureValues.slice(-10);
-                    const recentPressureValues    = pressureValues.slice(-10);
+                    const recentPressureValues = pressureValues.slice(-10);
                     const labels = Array(recentHumidityValues.length).fill('');
 
-                    // Γράφημα υγρασίας
-                    new Chart(
-                        document.getElementById('humidityChart').getContext('2d'),
-                        {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    data: recentHumidityValues,
-                                    fill: false,
-                                    borderColor: '#549256',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    x: { display: false },
-                                    y: {
-                                        display: true,
-                                        min: recentHumidityValues.length
-                                            ? Math.min(...recentHumidityValues) - 1
-                                            : 0,
-                                        max: recentHumidityValues.length
-                                            ? Math.max(...recentHumidityValues) + 1
-                                            : 100
-                                    }
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: { enabled: false }
+                    new Chart(document.getElementById('humidityChart').getContext('2d'), {
+                        type: 'line',
+                        data: { labels, datasets: [{ data: recentHumidityValues, fill: false, borderColor: '#549256', tension: 0.1 }] },
+                        options: {
+                            scales: {
+                                x: { display: false },
+                                y: {
+                                    display: true,
+                                    min: recentHumidityValues.length ? Math.min(...recentHumidityValues) - 1 : 0,
+                                    max: recentHumidityValues.length ? Math.max(...recentHumidityValues) + 1 : 100
                                 }
-                            }
+                            },
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } }
                         }
-                    );
+                    });
 
-                    // Γράφημα θερμοκρασίας
-                    new Chart(
-                        document.getElementById('temperatureChart').getContext('2d'),
-                        {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    data: recentTemperatureValues,
-                                    fill: false,
-                                    borderColor: '#e75d56',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    x: { display: false },
-                                    y: {
-                                        display: true,
-                                        min: recentTemperatureValues.length
-                                            ? Math.min(...recentTemperatureValues) - 1
-                                            : 0,
-                                        max: recentTemperatureValues.length
-                                            ? Math.max(...recentTemperatureValues) + 1
-                                            : 50
-                                    }
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: { enabled: false }
+                    new Chart(document.getElementById('temperatureChart').getContext('2d'), {
+                        type: 'line',
+                        data: { labels, datasets: [{ data: recentTemperatureValues, fill: false, borderColor: '#e75d56', tension: 0.1 }] },
+                        options: {
+                            scales: {
+                                x: { display: false },
+                                y: {
+                                    display: true,
+                                    min: recentTemperatureValues.length ? Math.min(...recentTemperatureValues) - 1 : 0,
+                                    max: recentTemperatureValues.length ? Math.max(...recentTemperatureValues) + 1 : 50
                                 }
-                            }
+                            },
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } }
                         }
-                    );
+                    });
 
-                    // Γράφημα πίεσης
-                    new Chart(
-                        document.getElementById('pressureChart').getContext('2d'),
-                        {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    data: recentPressureValues,
-                                    fill: false,
-                                    borderColor: '#eac861',
-                                    tension: 0.1
-                                }]
-                            },
-                            options: {
-                                scales: {
-                                    x: { display: false },
-                                    y: {
-                                        display: true,
-                                        min: recentPressureValues.length
-                                            ? Math.min(...recentPressureValues) - 1
-                                            : 900,
-                                        max: recentPressureValues.length
-                                            ? Math.max(...recentPressureValues) + 1
-                                            : 1100
-                                    }
-                                },
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: { enabled: false }
+                    new Chart(document.getElementById('pressureChart').getContext('2d'), {
+                        type: 'line',
+                        data: { labels, datasets: [{ data: recentPressureValues, fill: false, borderColor: '#eac861', tension: 0.1 }] },
+                        options: {
+                            scales: {
+                                x: { display: false },
+                                y: {
+                                    display: true,
+                                    min: recentPressureValues.length ? Math.min(...recentPressureValues) - 1 : 900,
+                                    max: recentPressureValues.length ? Math.max(...recentPressureValues) + 1 : 1100
                                 }
-                            }
+                            },
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } }
                         }
-                    );
+                    });
                 })
-                .catch(error => console.error('Σφάλμα κατά την ανάκτηση των δεδομένων:', error));
+                .catch(err => console.error('Σφάλμα κατά την ανάκτηση των δεδομένων:', err));
         });
     </script>
 </body>
 </html>
-
-
