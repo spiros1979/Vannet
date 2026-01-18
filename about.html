@@ -221,18 +221,18 @@
         </div>
          
         </div>
-        <!-- Footer placeholder -->
-        <div id="site-footer"></div>
+    <!-- Footer placeholder -->
+    <div id="site-footer"></div>
 
-        <!-- 1) Φόρτωσε το κοινό footer -->
-        <script>
-        fetch('footer.html')
+    <!-- 1) Φόρτωσε το κοινό footer -->
+    <script>
+      fetch('footer.html')
             .then(r => r.text())
             .then(html => {
                 const el = document.getElementById('site-footer');
                 if (el) el.innerHTML = html;
             })
             .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
-        </script>
+    </script>
 </body>
 </html>
