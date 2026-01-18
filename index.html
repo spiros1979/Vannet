@@ -264,37 +264,85 @@
     <div class="banner">
         <div class="container-fluid">
             <div class="row">
-                <div class="col-6">
-                    <div class="banner-title">UNO R4 WiFi - BME680</div>
-                    <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
-                </div>
+  <!-- Θερμοκρασία -->
+  <div class="col-md-3">
+    <div class="counter counter-top">
+      <h3>Θερμοκρασία</h3>
+      <canvas id="temperatureChart"></canvas>
+      <p id="temperature">--°C</p>
+      <div class="counter-details">
+        <span id="temperature-min">Ελάχιστο: --°C</span>
+        <span id="temperature-avg">Μ. όρος: --°C</span>
+        <span id="temperature-max">Μέγιστο: --°C</span>
+      </div>
+    </div>
+  </div>
 
-                <div class="col-6 text-right">
-                    <nav>
-                        <a class="nav-item" href="charts.html">
-                            <img src="thermometer.svg" alt="Γραφήματα" title="Γραφήματα θερμοκρασίας">
-                        </a>
-                        <a class="nav-item" href="humcharts.html">
-                            <img src="drop-half-bottom.svg" alt="Γραφήματα" title="Γραφήματα υγρασίας">
-                        </a>
-                        <a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Γραφήματα" title="Γραφήματα ατμοσφαιρικής πίεσης">
-                        </a>
-                        <a class="nav-item" href="aircharts.html">
-                            <img src="fan.svg" alt="Γραφήματα" title="Γραφήματα ποιότητας αέρα">
-                        </a>
-                        <a class="nav-item" href="tank1.html">
-                            <img src="tank_1.svg" alt="Δεξαμενή 1" title="Δεξαμενή 1">
-                        </a>
-                        <a class="nav-item" href="tank2.html">
-                            <img src="tank_2.svg" alt="Δεξαμενή 2" title="Δεξαμενή 2">
-                        </a>
-                        <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="Πληροφορίες" title="Σχετικά με τη σελίδα">
-                        </a>
-                    </nav>
-                </div>
-            </div>
+  <!-- Υγρασία -->
+  <div class="col-md-3">
+    <div class="counter counter-top">
+      <h3>Υγρασία</h3>
+      <canvas id="humidityChart"></canvas>
+      <p id="humidity">--%</p>
+      <div class="counter-details">
+        <span id="humidity-min">Ελάχιστο: --%</span>
+        <span id="humidity-avg">Μ. όρος: --%</span>
+        <span id="humidity-max">Μέγιστο: --%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Πίεση -->
+  <div class="col-md-3">
+    <div class="counter counter-top">
+      <h3>Πίεση</h3>
+      <canvas id="pressureChart"></canvas>
+      <p id="pressure">-- hPa</p>
+      <div class="counter-details">
+        <span id="pressure-min">Ελάχιστο: -- hPa</span>
+        <span id="pressure-avg">Μ. όρος: -- hPa</span>
+        <span id="pressure-max">Μέγιστο: -- hPa</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Δεξαμενές -->
+  <div class="col-md-3">
+    <div class="counter counter-top">
+      <h3>Δεξαμενές</h3>
+
+      <div class="tank-mini-wrap">
+        <!-- Tank 1 -->
+        <a class="tank-mini" href="tank1.html" title="Άνοιγμα σελίδας Δεξαμενής 1">
+          <div class="tank-mini-title">Δεξαμενή 1</div>
+          <div class="tank-shape">
+            <div id="tank1-water" class="tank-water" style="height:0%;"></div>
+            <div id="tank1-value" class="tank-value">-- lt</div>
+          </div>
+          <div class="tank-sub">
+            <span id="tank1-pct">--%</span>
+            <span>3000 lt</span>
+          </div>
+        </a>
+
+        <!-- Tank 2 -->
+        <a class="tank-mini" href="tank2.html" title="Άνοιγμα σελίδας Δεξαμενής 2">
+          <div class="tank-mini-title">Δεξαμενή 2</div>
+          <div class="tank-shape">
+            <div id="tank2-water" class="tank-water" style="height:0%;"></div>
+            <div id="tank2-value" class="tank-value">-- lt</div>
+          </div>
+          <div class="tank-sub">
+            <span id="tank2-pct">--%</span>
+            <span>500 lt</span>
+          </div>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
         </div>
     </div>
 
@@ -731,5 +779,6 @@
     </script>
 </body>
 </html>
+
 
 
