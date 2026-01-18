@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - Vannet</title>
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body {
             background-color: rgb(238, 238, 237);
             color: #241e1d;
         }
+
+        /* Banner */
         .banner {
             background-color: rgb(188, 173, 175);
             padding: 20px 10px;
@@ -20,71 +22,83 @@
             width: 100%;
             color: #241e1d;
         }
+
         .banner-title {
             font-size: 24px;
             font-weight: bold;
         }
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
         .nav-item {
             margin-left: 20px;
             display: inline-block;
             vertical-align: middle;
+            text-align: center;
         }
+
         .nav-item img {
             width: 24px;
             height: 24px;
             display: inline-block;
             filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
         }
-        nav {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
+
+        @media (max-width: 576px) {
+            nav { justify-content: center; }
+            .nav-item { margin-left: 10px; margin-bottom: 10px; }
         }
+
+        /* Content */
         .content {
             margin: 20px;
             font-size: 18px;
             line-height: 1.6;
         }
-        h2 {
+
+        h2, h3, h4 {
             color: rgb(110, 65, 69);
             font-weight: bold;
         }
-        h3 {
-            color: rgb(110, 65, 69);
-            font-weight: bold;
-            margin-top: 20px;
-        }
-        h4 {
-            color: rgb(110, 65, 69);
-            font-weight: bold;
-            margin-top: 15px;
-        }
+
+        h3 { margin-top: 20px; }
+        h4 { margin-top: 15px; }
+
         a {
             color: rgb(110, 65, 69);
             font-weight: bold;
             text-decoration: none;
         }
-        a:hover {
-            text-decoration: underline;
-        }
+
+        a:hover { text-decoration: underline; }
+
         ul {
             list-style-type: disc;
             margin-left: 20px;
         }
+
         figure {
             text-align: center;
             margin: 20px auto;
         }
+
         figure img {
             max-width: 50%;
             height: auto;
         }
+
         figcaption {
             color: rgb(110, 65, 69);
         }
-        
     </style>
 </head>
+
 <body>
     <!-- Banner -->
     <div class="banner">
@@ -93,22 +107,39 @@
                 <div class="col-6">
                     <div class="banner-title">Σχετικά με αυτό το site</div>
                 </div>
+
                 <div class="col-6 text-right">
                     <nav>
                         <a class="nav-item" href="index.html">
-                            <img src="speedometer.svg" alt="Home" title="Dashboard">
+                            <img src="speedometer.svg" alt="Home" title="Κεντρικός Πίνακας">
                         </a>
+
                         <a class="nav-item" href="charts.html">
-                            <img src="thermometer.svg" alt="Charts" title="Temperature Charts">
+                            <img src="thermometer.svg" alt="Temperature Charts" title="Γραφήματα Θερμοκρασίας">
                         </a>
+
                         <a class="nav-item" href="humcharts.html">
-                            <img src="drop-half-bottom.svg" alt="Humidity Charts" title="Humidity Charts">
+                            <img src="drop-half-bottom.svg" alt="Humidity Charts" title="Γραφήματα Υγρασίας">
                         </a>
+
                         <a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Pressure Charts" title="Pressure Charts">
+                            <img src="cloud-sun.svg" alt="Pressure Charts" title="Γραφήματα Πίεσης">
                         </a>
+
+                        <a class="nav-item" href="aircharts.html">
+                            <img src="fan.svg" alt="AIQ Charts" title="Γραφήματα Ποιότητας Αέρα">
+                        </a>
+
+                        <a class="nav-item" href="tank1.html">
+                            <img src="tank_1.svg" alt="Δεξαμενή 1" title="Δεξαμενή 1">
+                        </a>
+
+                        <a class="nav-item" href="tank2.html">
+                            <img src="tank_2.svg" alt="Δεξαμενή 2" title="Δεξαμενή 2">
+                        </a>
+
                         <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="About This Site">
+                            <img src="info.svg" alt="About" title="Σχετικά με τη σελίδα">
                         </a>
                     </nav>
                 </div>
@@ -116,34 +147,35 @@
         </div>
     </div>
 
+    <!-- Content -->
     <div class="container-fluid">
         <div class="content">
             <p>
-                Η σελίδα που βλέπεις είναι μέρος του project <strong>Vannet</strong> και υλοποιείται με το repo 
-                <a href="https://github.com/spiros1979/Vannet.git" target="_blank">https://github.com/spiros1979/Vannet.git</a> 
-                και το GitHub Pages.  
-                Aποτελεί fork του 
-                <a href="https://github.com/GarauGarau/TempData" target="_blank">https://github.com/GarauGarau/TempData</a>.
-                Η ιδέα είναι σχετικά απλή: να έχουμε μια καθαρή εικόνα για τις κλιματολογικές συνθήκες μιας περιοχής 
-                (θερμοκρασία, υγρασία, πίεση, ποιότητα αέρα), μετεωρολογική πρόβλεψη, καθώς και δεδομένα από δεξαμενές 
-                (στάθμη) και κατανάλωση νερού σε σπίτι ή χωράφι. 
-                Η εφαρμογή ενημερώνει άμεσα τον χρήστη μέσα από ένα web dashboard, χρησιμοποιώντας βασικά εργαλεία: 
-                <strong>HTML, CSS, JavaScript</strong> και <strong>Chart.js</strong>.</strong>
+                Η σελίδα που βλέπεις είναι μέρος του project <strong>Vannet</strong> και υλοποιείται με το repo
+                <a href="https://github.com/spiros1979/Vannet.git" target="_blank" rel="noopener">https://github.com/spiros1979/Vannet.git</a>
+                και το GitHub Pages.
+                Αποτελεί fork του
+                <a href="https://github.com/GarauGarau/TempData" target="_blank" rel="noopener">https://github.com/GarauGarau/TempData</a>.
+                Η ιδέα είναι σχετικά απλή: να έχουμε μια καθαρή εικόνα για τις κλιματολογικές συνθήκες μιας περιοχής
+                (θερμοκρασία, υγρασία, πίεση, ποιότητα αέρα), μετεωρολογική πρόβλεψη, καθώς και δεδομένα από δεξαμενές
+                (στάθμη) και κατανάλωση νερού σε σπίτι ή χωράφι.
+                Η εφαρμογή ενημερώνει άμεσα τον χρήστη μέσα από ένα web dashboard, χρησιμοποιώντας βασικά εργαλεία:
+                <strong>HTML, CSS, JavaScript</strong> και <strong>Chart.js</strong>.
             </p>
 
             <p>
-                Στο “παρασκήνιο” τρέχει ένα <strong>Arduino UNO R4 WiFi</strong> σε συνδυασμό με έναν 
-                <strong>Pimoroni BME680</strong> αισθητήρα. Το UNO R4 διαβάζει τις τιμές από τον αισθητήρα και 
-                τις στέλνει περιοδικά, ενώ η εφαρμογή που φτιάξαμε σε JavaScript και HTML αναλαμβάνει να τις 
-                εμφανίσει με έναν τρόπο που να είναι εύκολο να διαβαστεί, ακόμη και από κάποιον που απλά θέλει 
+                Στο “παρασκήνιο” τρέχει ένα <strong>Arduino UNO R4 WiFi</strong> σε συνδυασμό με έναν
+                <strong>Pimoroni BME680</strong> αισθητήρα. Το UNO R4 διαβάζει τις τιμές από τον αισθητήρα και
+                τις στέλνει περιοδικά, ενώ η εφαρμογή που φτιάξαμε σε JavaScript και HTML αναλαμβάνει να τις
+                εμφανίσει με έναν τρόπο που να είναι εύκολο να διαβαστεί, ακόμη και από κάποιον που απλά θέλει
                 να δει «τι καιρό κάνει». Ωστόσο, ο απώτερος σκοπός είναι το σύστημα να κάνει πολύ περισσότερα πράγματα.
             </p>
 
-            <h2>Hardware – UNO R4 WiFi & Pimoroni BME680</h2>
+            <h2>Hardware – UNO R4 WiFi &amp; Pimoroni BME680</h2>
 
             <h3>Arduino UNO R4 WiFi</h3>
             <p>
-                Το <strong>UNO R4 WiFi</strong> είναι η βασική πλακέτα του συστήματος. Κρατάει το κλασικό 
+                Το <strong>UNO R4 WiFi</strong> είναι η βασική πλακέτα του συστήματος. Κρατάει το κλασικό
                 form factor του Arduino UNO, αλλά προσθέτει:
             </p>
             <ul>
@@ -154,7 +186,7 @@
 
             <h3>Pimoroni BME680</h3>
             <p>
-                Το <strong>Pimoroni BME680</strong> είναι ένα μικρό breakout που βασίζεται στον αισθητήρα 
+                Το <strong>Pimoroni BME680</strong> είναι ένα μικρό breakout που βασίζεται στον αισθητήρα
                 <strong>Bosch BME680</strong> και μπορεί να μετρήσει:
             </p>
             <ul>
@@ -164,8 +196,8 @@
                 <li>Gas / VOC (δείκτης ποιότητας αέρα)</li>
             </ul>
             <p>
-                Η επικοινωνία με την UNO R4 γίνεται μέσω <strong>I²C</strong>, άρα στην πράξη 
-                χρειάζονται μόνο γραμμές για SDA, SCL, τροφοδοσία και γείωση. Ο αισθητήρας λειτουργεί σε 
+                Η επικοινωνία με την UNO R4 γίνεται μέσω <strong>I²C</strong>, άρα στην πράξη
+                χρειάζονται μόνο γραμμές για SDA, SCL, τροφοδοσία και γείωση. Ο αισθητήρας λειτουργεί σε
                 εύρος τιμών ιδανικό τόσο για εσωτερικό όσο και για εξωτερικό χώρο.
             </p>
 
@@ -179,25 +211,18 @@
                 <li>Οι μετρήσεις γίνονται περιοδικά (π.χ. ανά δίλεπτο) ώστε να έχουμε ομαλές καμπύλες στα γραφήματα.</li>
                 <li>Ο BME680 χρειάζεται λίγο χρόνο στην αρχή για να σταθεροποιηθούν οι τιμές gas.</li>
                 <li>Επειδή ο αισθητήρας είναι πάνω σε πλακέτα, η θερμοκρασία μπορεί να διαβάζεται 1–2 βαθμούς πιο πάνω.</li>
-                <li>Ο δείκτης IAQ είναι προς το παρόν περισσότερο ενδεικτικός· μελλοντικά θα χρησιμοποιηθεί κατάλληλη βιβλιοθήκη για πιο αξιόπιστη εκτίμηση.</li>
+                <li>Ο δείκτης IAQ είναι προς το παρόν περισσότερο ενδεικτικός· μελλοντικά θα χρησιμοποιηθεί πιο αξιόπιστη εκτίμηση.</li>
             </ul>
 
             <h2>Frontend – Η web εφαρμογή</h2>
             <p>
-                Η εφαρμογή που «πατάει» πάνω στα δεδομένα είναι φτιαγμένη με <strong>απλό HTML και JavaScript</strong>, 
-                όπως δουλέψαμε στα προηγούμενα βήματα:
+                Η εφαρμογή που «πατάει» πάνω στα δεδομένα είναι φτιαγμένη με <strong>απλό HTML και JavaScript</strong>:
             </p>
             <ul>
                 <li><strong>HTML + Bootstrap</strong> για τη βασική δομή και το layout των σελίδων.</li>
                 <li><strong>JavaScript</strong> για να φορτώνει τα δεδομένα, να τα επεξεργάζεται και να ενημερώνει τα γραφήματα.</li>
                 <li><strong>Chart.js</strong> για τη δημιουργία των γραφημάτων θερμοκρασίας, υγρασίας και πίεσης.</li>
             </ul>
-
-            <p>
-                Η αρχική σελίδα λειτουργεί σαν <strong>dashboard</strong> με τις πιο πρόσφατες τιμές, ενώ οι υπόλοιπες 
-                σελίδες (Temperature / Humidity / Pressure charts) δείχνουν την ιστορία των μετρήσεων και επιτρέπουν 
-                πιο «ήρεμη» ματιά στις τάσεις κατά τη διάρκεια της ημέρας.
-            </p>
 
             <figure id="image2">
                 <img src="Vannet_Wiring.png" alt="Συνδεσμολογία UNO R4 Wifi με BME680">
@@ -206,36 +231,30 @@
 
             <h2>Γιατί έτσι</h2>
             <p>
-                Ο στόχος δεν είναι να φτιάξουμε κάτι περίπλοκο, αλλά κάτι που αργότερα θα αποτελέσει μέρος ενός μεγαλύτερου app  
+                Ο στόχος δεν είναι να φτιάξουμε κάτι περίπλοκο, αλλά κάτι που αργότερα θα αποτελέσει μέρος ενός μεγαλύτερου app
                 που θα προσφέρει διάδραση με τον χρήστη και θα συνδέει:
             </p>
             <ul>
                 <li>Πραγματικές μετρήσεις από Arduino και αισθητήρα.</li>
                 <li>Μια απλή web διεπαφή με HTML, CSS και JavaScript.</li>
-                <li>Γραφική απεικόνιση με Chart.js, ώστε το χωράφι ή το σπίτι να αποκτήσει ένα μικρό «ψηφιακό δίδυμο» στην οθόνη.</li>
+                <li>Γραφική απεικόνιση με Chart.js, ώστε το σπίτι/χωράφι να αποκτήσει ένα μικρό «ψηφιακό δίδυμο».</li>
             </ul>
 
-            <p>
-                Έτσι μπορούμε σχετικά απλά να έχουμε ένα πρακτικό παράδειγμα συνδυασμού hardware και web τεχνολογιών.
-            </p>
-        </div>
-         
-        </div>
-        <!-- Footer placeholder (έξω από το content) -->
+            <p>Έτσι μπορούμε σχετικά απλά να έχουμε ένα πρακτικό παράδειγμα συνδυασμού hardware και web τεχνολογιών.</p>
+        </div> <!-- /.content -->
+    </div> <!-- /.container-fluid -->
+
+    <!-- Footer placeholder (έξω από το content) -->
     <div id="site-footer"></div>
 
     <script>
         fetch('footer.html')
-            .then(response => response.text())
+            .then(r => r.text())
             .then(html => {
-                const footer = document.getElementById('site-footer');
-                if (footer) {
-                    footer.innerHTML = html;
-                }
+                const el = document.getElementById('site-footer');
+                if (el) el.innerHTML = html;
             })
-            .catch(error => {
-                console.error('Σφάλμα φόρτωσης footer:', error);
-            });
+            .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
     </script>
 </body>
 </html>
