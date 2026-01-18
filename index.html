@@ -181,6 +181,12 @@
       display: flex;
       justify-content: space-between;
     }
+    /* Κενό στο τέλος, για να μην πατάει το περιεχόμενο πάνω στο footer */
+      .container { padding-bottom: 40px; }
+
+      /* Αν το footer είναι fixed/sticky, αυτό σώζει 100% */
+      #site-footer { margin-top: 20px; }
+
   </style>
 </head>
 
@@ -613,4 +619,5 @@
   </script>
 </body>
 </html>
+
 
