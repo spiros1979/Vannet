@@ -5,95 +5,106 @@
   <title>Ρυθμίσεις</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- ό,τι CSS έχεις και στις άλλες σελίδες -->
+  <!-- ίδιο CSS με τις άλλες σελίδες -->
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- HEADER -->
-  <div class="container">
-    <div class="row align-items-center">
+<!-- ================= HEADER ================= -->
+<div class="container">
+  <div class="row align-items-center">
 
-      <div class="col-6">
-        <h2 style="margin:0">Ρυθμίσεις</h2>
-      </div>
-
-      <div class="col-6 text-right">
-        <nav>
-
-          <a class="nav-item" href="#" id="update-data">
-            <img src="arrows-counter-clockwise.svg"
-                 alt="Ανανέωση"
-                 title="Ανανέωση δεδομένων">
-          </a>
-
-          <a class="nav-item" href="index.html">
-            <img src="speedometer.svg"
-                 alt="Αρχική"
-                 title="Κεντρικός πίνακας">
-          </a>
-
-          <a class="nav-item" href="charts.html">
-            <img src="thermometer.svg"
-                 alt="Γραφήματα θερμοκρασίας"
-                 title="Γραφήματα θερμοκρασίας">
-          </a>
-
-          <a class="nav-item" href="presscharts.html">
-            <img src="cloud-sun.svg"
-                 alt="Γραφήματα πίεσης"
-                 title="Γραφήματα πίεσης">
-          </a>
-
-          <a class="nav-item" href="aircharts.html">
-            <img src="fan.svg"
-                 alt="Γραφήματα ποιότητας αέρα"
-                 title="Γραφήματα ποιότητας αέρα">
-          </a>
-
-          <a class="nav-item" href="about.html">
-            <img src="info.svg"
-                 alt="Πληροφορίες"
-                 title="Σχετικά">
-          </a>
-
-          <!-- ΔΕΝ βάζουμε το gear εδώ -->
-
-        </nav>
-      </div>
-
+    <div class="col-6">
+      <h2 style="margin:0">Ρυθμίσεις</h2>
     </div>
-  </div>
 
-  <!-- CONTENT -->
-  <div class="container" style="margin-top:20px">
+    <div class="col-6 text-right">
+      <nav>
 
-    <p>
-      Εδώ θα μπουν σταδιακά οι ρυθμίσεις εμφάνισης, χρωμάτων και ορίων
-      για τις ενδείξεις του συστήματος.
-    </p>
+        <a class="nav-item" href="#" id="update-data">
+          <img src="arrows-counter-clockwise.svg"
+               alt="Ανανέωση"
+               title="Ανανέωση δεδομένων">
+        </a>
 
-    <!-- placeholder για επόμενα βήματα -->
-    <div class="card">
-      <p>⚙️ Ρυθμίσεις (σε εξέλιξη)</p>
+        <a class="nav-item" href="index.html">
+          <img src="speedometer.svg"
+               alt="Αρχική"
+               title="Κεντρικός Πίνακας">
+        </a>
+
+        <a class="nav-item" href="charts.html">
+          <img src="thermometer.svg"
+               alt="Γραφήματα Θερμοκρασίας"
+               title="Γραφήματα Θερμοκρασίας">
+        </a>
+
+        <a class="nav-item" href="humcharts.html">
+          <img src="drop-half-bottom.svg"
+               alt="Γραφήματα Υγρασίας"
+               title="Γραφήματα Υγρασίας">
+        </a>
+
+        <a class="nav-item" href="presscharts.html">
+          <img src="cloud-sun.svg"
+               alt="Γραφήματα Πίεσης"
+               title="Γραφήματα Πίεσης">
+        </a>
+
+        <a class="nav-item" href="aircharts.html">
+          <img src="fan.svg"
+               alt="Γραφήματα Ποιότητας Αέρα"
+               title="Γραφήματα Ποιότητας Αέρα">
+        </a>
+
+        <a class="nav-item" href="tank1.html">
+          <img src="tank_1.svg"
+               alt="Δεξαμενή 1"
+               title="Δεξαμενή 1">
+        </a>
+
+        <a class="nav-item" href="tank2.html">
+          <img src="tank_2.svg"
+               alt="Δεξαμενή 2"
+               title="Δεξαμενή 2">
+        </a>
+
+        <!-- ΔΕΝ ΒΑΖΟΥΜΕ GEAR ΕΔΩ -->
+
+      </nav>
     </div>
 
   </div>
+</div>
 
-  <!-- FOOTER -->
-  <!-- Footer placeholder (έξω από το content) -->
-  <div id="site-footer"></div>
+<!-- ================= CONTENT ================= -->
+<div class="container" style="margin-top:20px">
 
-  <script>
-    fetch('/footer.html')
-      .then(r => r.text())
-      .then(html => {
-        const el = document.getElementById('site-footer');
-        if (el) el.innerHTML = html;
-      })
-      .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
-  </script>
+  <p>
+    Εδώ θα μπουν σταδιακά οι ρυθμίσεις εμφάνισης, χρωμάτων και ορίων
+    για τις ενδείξεις του συστήματος.
+  </p>
+
+  <div class="card">
+    <p>⚙️ Ρυθμίσεις (σε εξέλιξη)</p>
+  </div>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+<!-- ΠΡΟΣΟΧΗ: ΕΔΩ Η ΔΙΟΡΘΩΣΗ -->
+<div id="site-footer"></div>
+
+<script>
+  fetch('footer.html')   // <-- ΣΩΣΤΟ
+    .then(r => r.text())
+    .then(html => {
+      const el = document.getElementById('site-footer');
+      if (el) el.innerHTML = html;
+    })
+    .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+</script>
 
 </body>
 </html>
