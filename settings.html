@@ -1,1 +1,223 @@
-τεστ
+---
+layout: default
+title: Settings
+permalink: /settings/
+---
+
+<style>
+  .settings-wrap{max-width:980px;margin:0 auto;padding:24px 16px}
+  .settings-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  .gear-badge{width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;
+    border-radius:12px;background:rgba(0,0,0,.06)}
+  .gear-badge img{width:26px;height:26px;object-fit:contain;display:block}
+
+  .card{background:#fff;border:1px solid rgba(0,0,0,.10);border-radius:16px;padding:16px;margin:12px 0;
+    box-shadow:0 6px 18px rgba(0,0,0,.06)}
+  .card h3{margin:0 0 12px 0;font-size:18px}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+  .col-6{grid-column:span 6}
+  .col-4{grid-column:span 4}
+  .col-12{grid-column:span 12}
+  @media (max-width:860px){ .col-6,.col-4{grid-column:span 12} }
+
+  label{font-size:14px;display:block;margin-bottom:6px;opacity:.85}
+  input[type="number"], input[type="text"], select{
+    width:100%;padding:10px 12px;border:1px solid rgba(0,0,0,.18);border-radius:12px;background:#fff
+  }
+  input[type="color"]{width:100%;height:42px;border:1px solid rgba(0,0,0,.18);border-radius:12px;background:#fff;padding:4px}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .toggle{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid rgba(0,0,0,.10);
+    border-radius:14px;background:rgba(0,0,0,.03)}
+  .toggle input{transform:scale(1.2)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  button{
+    padding:10px 14px;border-radius:14px;border:1px solid rgba(0,0,0,.12);
+    background:#111;color:#fff;cursor:pointer
+  }
+  button.secondary{background:#fff;color:#111}
+  .note{font-size:13px;opacity:.75;margin-top:6px;line-height:1.4}
+  .ok{padding:10px 12px;border-radius:14px;background:rgba(0,128,0,.10);border:1px solid rgba(0,128,0,.25);display:none}
+</style>
+
+<div class="settings-wrap">
+  <div class="settings-head">
+    <span class="gear-badge" title="Settings">
+      <img src="/assets/img/gear.png" alt="Settings gear">
+      <!-- αν είναι svg: <img src="/assets/img/gear.svg" ...> -->
+    </span>
+    <div>
+      <h1 style="margin:0;font-size:26px">Ρυθμίσεις</h1>
+      <div class="note">Αυτές οι ρυθμίσεις αποθηκεύονται στον browser (localStorage).</div>
+    </div>
+  </div>
+
+  <div id="savedMsg" class="ok">✅ Αποθηκεύτηκε!</div>
+
+  <div class="card">
+    <h3>Τι θα εμφανίζεται στο Index</h3>
+    <div class="row">
+      <label class="toggle"><input type="checkbox" id="showTemp"> Θερμοκρασία</label>
+      <label class="toggle"><input type="checkbox" id="showHum"> Υγρασία</label>
+      <label class="toggle"><input type="checkbox" id="showPress"> Πίεση</label>
+      <label class="toggle"><input type="checkbox" id="showAiq"> AIQ</label>
+      <label class="toggle"><input type="checkbox" id="showGas"> Gas</label>
+    </div>
+    <div class="note">Στο index θα διαβάζεις αυτά τα flags και θα κρύβεις/δείχνεις κάρτες.</div>
+  </div>
+
+  <div class="card">
+    <h3>Χρωματικός κώδικας ανά ένδειξη (όρια + χρώματα)</h3>
+
+    <div class="grid">
+      <div class="col-12"><strong>AIQ</strong><div class="note">Παράδειγμα: Good ≤ 50, Moderate ≤ 100, αλλιώς Bad</div></div>
+
+      <div class="col-4">
+        <label>AIQ Good έως</label>
+        <input type="number" id="aiqGoodMax" step="1">
+      </div>
+      <div class="col-4">
+        <label>AIQ Moderate έως</label>
+        <input type="number" id="aiqModMax" step="1">
+      </div>
+      <div class="col-4">
+        <label>AIQ Bad από</label>
+        <input type="number" id="aiqBadMin" step="1">
+      </div>
+
+      <div class="col-4">
+        <label>Χρώμα Good</label>
+        <input type="color" id="cGood">
+      </div>
+      <div class="col-4">
+        <label>Χρώμα Moderate</label>
+        <input type="color" id="cMod">
+      </div>
+      <div class="col-4">
+        <label>Χρώμα Bad</label>
+        <input type="color" id="cBad">
+      </div>
+
+      <div class="col-12" style="margin-top:6px"><strong>Θερμοκρασία (ενδεικτικά)</strong></div>
+
+      <div class="col-6">
+        <label>Temp OK από (°C)</label>
+        <input type="number" id="tempOkMin" step="0.1">
+      </div>
+      <div class="col-6">
+        <label>Temp OK έως (°C)</label>
+        <input type="number" id="tempOkMax" step="0.1">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btnSave">Αποθήκευση</button>
+      <button class="secondary" id="btnReset">Επαναφορά default</button>
+    </div>
+    <div class="note">
+      Tip: κράτα τα defaults “λογικά” και μετά τα προσαρμόζεις ανά χώρο/αισθητήρα.
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = "vannet_settings_v1";
+
+  const defaults = {
+    show: { temp:true, hum:true, press:true, aiq:true, gas:true },
+    aiq:  { goodMax:50, modMax:100, badMin:101 },
+    colors:{ good:"#2ecc71", mod:"#f1c40f", bad:"#e74c3c" },
+    temp: { okMin:18.0, okMax:26.0 }
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? {...defaults, ...JSON.parse(raw)} : defaults;
+    }catch(e){
+      return defaults;
+    }
+  }
+
+  function saveSettings(obj){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  }
+
+  function fillForm(s){
+    $("showTemp").checked = !!s.show.temp;
+    $("showHum").checked  = !!s.show.hum;
+    $("showPress").checked= !!s.show.press;
+    $("showAiq").checked  = !!s.show.aiq;
+    $("showGas").checked  = !!s.show.gas;
+
+    $("aiqGoodMax").value = s.aiq.goodMax;
+    $("aiqModMax").value  = s.aiq.modMax;
+    $("aiqBadMin").value  = s.aiq.badMin;
+
+    $("cGood").value = s.colors.good;
+    $("cMod").value  = s.colors.mod;
+    $("cBad").value  = s.colors.bad;
+
+    $("tempOkMin").value = s.temp.okMin;
+    $("tempOkMax").value = s.temp.okMax;
+  }
+
+  function readForm(){
+    return {
+      show:{
+        temp:$("showTemp").checked,
+        hum:$("showHum").checked,
+        press:$("showPress").checked,
+        aiq:$("showAiq").checked,
+        gas:$("showGas").checked
+      },
+      aiq:{
+        goodMax: Number($("aiqGoodMax").value),
+        modMax:  Number($("aiqModMax").value),
+        badMin:  Number($("aiqBadMin").value)
+      },
+      colors:{
+        good:$("cGood").value,
+        mod:$("cMod").value,
+        bad:$("cBad").value
+      },
+      temp:{
+        okMin: Number($("tempOkMin").value),
+        okMax: Number($("tempOkMax").value)
+      }
+    };
+  }
+
+  function flashSaved(){
+    const el = $("savedMsg");
+    el.style.display = "block";
+    setTimeout(()=> el.style.display="none", 1400);
+  }
+
+  // init
+  const s = loadSettings();
+  fillForm(s);
+
+  $("btnSave").addEventListener("click", ()=>{
+    const newS = readForm();
+    saveSettings(newS);
+    flashSaved();
+  });
+
+  $("btnReset").addEventListener("click", ()=>{
+    saveSettings(defaults);
+    fillForm(defaults);
+    flashSaved();
+  });
+</script>
+<script>
+  fetch('/footer.html')
+    .then(r => r.text())
+    .then(html => {
+      const el = document.getElementById('site-footer');
+      if (el) el.innerHTML = html;
+    })
+    .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+</script>
+
