@@ -142,12 +142,106 @@
         Εδώ θα μπουν σταδιακά οι ρυθμίσεις εμφάνισης, χρωμάτων και ορίων για τις ενδείξεις του συστήματος.
       </p>
 
-      <h2>Ρυθμίσεις (σε εξέλιξη)</h2>
-      <ul>
-        <li>Εμφάνιση/απόκρυψη καρτών στο index</li>
-        <li>Χρωματικός κώδικας για AIQ / θερμοκρασία κ.λπ.</li>
-        <li>Όρια “καλό / μέτριο / κακό”</li>
-      </ul>
+      <h2>Ρυθμίσεις</h2>
+
+<h3>Κάρτες που θα εμφανίζονται στο Index</h3>
+
+<div class="mb-3">
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showTemp"> Θερμοκρασία
+  </label>
+
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showHum"> Υγρασία
+  </label>
+
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showPress"> Πίεση
+  </label>
+
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showAiq"> Ποιότητα Αέρα (AIQ)
+  </label>
+
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showGas"> Gas / VOC
+  </label>
+
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showWeather"> Καιρός / Πρόβλεψη
+  </label>
+
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showTank1"> Δεξαμενή 1
+  </label>
+
+  <label style="display:block; margin-bottom:8px;">
+    <input type="checkbox" id="showTank2"> Δεξαμενή 2
+  </label>
+</div>
+
+<button class="btn btn-primary" id="saveSettings">Αποθήκευση</button>
+<span id="saveMsg" style="margin-left:12px; color: rgb(110, 65, 69); font-weight:bold;"></span>
+
+<script>
+  const KEY = "vannet_settings_v1";
+
+  const defaults = {
+    showTemp: true,
+    showHum: true,
+    showPress: true,
+    showAiq: true,
+    showGas: true,
+    showWeather: true,
+    showTank1: true,
+    showTank2: true
+  };
+
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      return raw ? { ...defaults, ...JSON.parse(raw) } : { ...defaults };
+    } catch (e) {
+      return { ...defaults };
+    }
+  }
+
+  function applyToForm(s) {
+    document.getElementById("showTemp").checked = !!s.showTemp;
+    document.getElementById("showHum").checked = !!s.showHum;
+    document.getElementById("showPress").checked = !!s.showPress;
+    document.getElementById("showAiq").checked = !!s.showAiq;
+    document.getElementById("showGas").checked = !!s.showGas;
+    document.getElementById("showWeather").checked = !!s.showWeather;
+    document.getElementById("showTank1").checked = !!s.showTank1;
+    document.getElementById("showTank2").checked = !!s.showTank2;
+  }
+
+  function readFromForm() {
+    return {
+      showTemp: document.getElementById("showTemp").checked,
+      showHum: document.getElementById("showHum").checked,
+      showPress: document.getElementById("showPress").checked,
+      showAiq: document.getElementById("showAiq").checked,
+      showGas: document.getElementById("showGas").checked,
+      showWeather: document.getElementById("showWeather").checked,
+      showTank1: document.getElementById("showTank1").checked,
+      showTank2: document.getElementById("showTank2").checked
+    };
+  }
+
+  // init
+  applyToForm(loadSettings());
+
+  document.getElementById("saveSettings").addEventListener("click", () => {
+    const s = readFromForm();
+    localStorage.setItem(KEY, JSON.stringify(s));
+    const msg = document.getElementById("saveMsg");
+    msg.textContent = "Αποθηκεύτηκε!";
+    setTimeout(() => msg.textContent = "", 1200);
+  });
+</script>
+
 
     </div>
   </div>
