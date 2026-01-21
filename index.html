@@ -208,6 +208,7 @@
             <a class="nav-item" href="aircharts.html"><img src="fan.svg" alt="AIQ" title="Γραφήματα ποιότητας αέρα"></a>
             <a class="nav-item" href="tank1.html"><img src="tank_1.svg" alt="Δεξαμενή 1" title="Δεξαμενή 1"></a>
             <a class="nav-item" href="tank2.html"><img src="tank_2.svg" alt="Δεξαμενή 2" title="Δεξαμενή 2"></a>
+            <a class="nav-item" href="settings.html"><img src="gear.svg" alt="Ρυθμίσεις" title="Ρυθμίσεις"></a>
             <a class="nav-item" href="about.html"><img src="info.svg" alt="Πληροφορίες" title="Σχετικά με τη σελίδα"></a>
           </nav>
         </div>
@@ -560,6 +561,25 @@
 
           updateIAQ(lastAIQ);
           updateTankMiniWidgets(lastRow['D1'], lastRow['D2']);
+                  // --- alerts (yellow/red) ---
+          const CAP1 = 3000;
+          const CAP2 = 500;
+          const d1Num = Number(lastRow['D1']);
+          const d2Num = Number(lastRow['D2']);
+          const tank1Pct = Number.isFinite(d1Num) ? Math.round((d1Num / CAP1) * 100) : NaN;
+          const tank2Pct = Number.isFinite(d2Num) ? Math.round((d2Num / CAP2) * 100) : NaN;
+
+          if (window.runAlertsFromLatestValues) {
+            window.runAlertsFromLatestValues({
+            temp: lastTemp,
+            hum: lastHum,
+            press: lastPress,
+            aiq: lastAIQ,
+            tank1Pct,
+            tank2Pct
+            });
+           }
+
 
           const recentHumidityValues = humidityValues.slice(-10);
           const recentTemperatureValues = temperatureValues.slice(-10);
@@ -617,7 +637,185 @@
         .catch(err => console.error('Σφάλμα κατά την ανάκτηση των δεδομένων:', err));
     });
   </script>
+  <script>
+  // =========================
+  // Notifications (Yellow/Red) με toggles από settings
+  // =========================
+
+  const SETTINGS_KEY = "vannet_settings_v1";
+  const ALERT_STATE_KEY = "vannet_alert_state_v1";
+
+  // default toggles (αν δεν έχει αποθηκεύσει κάτι ο χρήστης)
+  const defaultSettings = {
+    alerts: {
+      temp:  { enabled: true, yellow: true,  red: true },
+      hum:   { enabled: true, yellow: true,  red: true },
+      press: { enabled: true, yellow: true,  red: true },
+      aiq:   { enabled: true, yellow: true,  red: true },
+      tank1: { enabled: true, yellow: true,  red: true },
+      tank2: { enabled: true, yellow: true,  red: true }
+    }
+  };
+
+  function getSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return structuredClone(defaultSettings);
+      const parsed = JSON.parse(raw);
+
+      // merge απλό
+      return {
+        ...defaultSettings,
+        ...parsed,
+        alerts: { ...defaultSettings.alerts, ...(parsed.alerts || {}) }
+      };
+    } catch (e) {
+      return structuredClone(defaultSettings);
+    }
+  }
+
+  function getAlertState() {
+    try { return JSON.parse(localStorage.getItem(ALERT_STATE_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+
+  function setAlertState(st) {
+    localStorage.setItem(ALERT_STATE_KEY, JSON.stringify(st));
+  }
+
+  function shouldNotify(key, level, settings) {
+    const a = settings.alerts?.[key];
+    if (!a || !a.enabled) return false;
+    if (level === "yellow" && !a.yellow) return false;
+    if (level === "red" && !a.red) return false;
+    return level === "yellow" || level === "red";
+  }
+
+  function showToast(msg, level) {
+    let el = document.getElementById("vannet-toast");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "vannet-toast";
+      el.style.position = "fixed";
+      el.style.right = "16px";
+      el.style.bottom = "16px";
+      el.style.padding = "12px 14px";
+      el.style.borderRadius = "12px";
+      el.style.boxShadow = "0 8px 24px rgba(0,0,0,.18)";
+      el.style.zIndex = "9999";
+      el.style.maxWidth = "380px";
+      el.style.fontSize = "14px";
+      el.style.lineHeight = "1.3";
+      document.body.appendChild(el);
+    }
+
+    // χρώματα toast (ήπια, όχι κραυγαλέα)
+    if (level === "red") {
+      el.style.background = "#ffe2e2";
+      el.style.border = "1px solid #ff9a9a";
+    } else {
+      el.style.background = "#fff4cc";
+      el.style.border = "1px solid #ffd36a";
+    }
+    el.style.color = "#241e1d";
+    el.textContent = msg;
+    el.style.display = "block";
+
+    clearTimeout(window.__toastTimer);
+    window.__toastTimer = setTimeout(() => el.style.display = "none", 4000);
+  }
+
+  function processAlert(key, level, msg, settings) {
+    if (!shouldNotify(key, level, settings)) return;
+
+    const st = getAlertState();
+    const prev = st[key]?.level || "green";
+
+    // χωρίς spam: ειδοποιούμε μόνο όταν αλλάζει επίπεδο
+    if (prev === level) return;
+
+    st[key] = { level, ts: Date.now() };
+    setAlertState(st);
+
+    showToast(msg, level);
+  }
+
+  // --------- classification rules (αρχικά defaults, μετά τα κάνουμε ρυθμιζόμενα) ---------
+  function levelTemp(t) {
+    if (!Number.isFinite(t)) return "green";
+    if (t < 16 || t > 28) return "red";
+    if (t < 18 || t > 26) return "yellow";
+    return "green";
+  }
+
+  function levelHum(h) {
+    if (!Number.isFinite(h)) return "green";
+    if (h < 30 || h > 70) return "red";
+    if (h < 40 || h > 60) return "yellow";
+    return "green";
+  }
+
+  function levelPress(p) {
+    if (!Number.isFinite(p)) return "green";
+    // απλά defaults: κίτρινο έξω από 990–1030, κόκκινο έξω από 970–1050
+    if (p < 970 || p > 1050) return "red";
+    if (p < 990 || p > 1030) return "yellow";
+    return "green";
+  }
+
+  function levelAIQ(a) {
+    if (!Number.isFinite(a)) return "green";
+    if (a > 100) return "red";
+    if (a > 60) return "yellow";
+    return "green";
+  }
+
+  function levelTankPct(pct) {
+    if (!Number.isFinite(pct)) return "green";
+    if (pct < 15) return "red";
+    if (pct < 30) return "yellow";
+    return "green";
+  }
+
+  // --------- hook point: θα καλείται αφού φορτώσεις τα δεδομένα ---------
+  function runAlertsFromLatestValues(latest) {
+    const settings = getSettings();
+
+    // TEMP
+    const tLev = levelTemp(latest.temp);
+    if (tLev === "yellow") processAlert("temp", "yellow", `Θερμοκρασία: προσοχή (${latest.temp.toFixed(1)}°C)`, settings);
+    if (tLev === "red")    processAlert("temp", "red",    `Θερμοκρασία: συναγερμός (${latest.temp.toFixed(1)}°C)`, settings);
+
+    // HUM
+    const hLev = levelHum(latest.hum);
+    if (hLev === "yellow") processAlert("hum", "yellow", `Υγρασία: προσοχή (${latest.hum.toFixed(1)}%)`, settings);
+    if (hLev === "red")    processAlert("hum", "red",    `Υγρασία: συναγερμός (${latest.hum.toFixed(1)}%)`, settings);
+
+    // PRESS
+    const pLev = levelPress(latest.press);
+    if (pLev === "yellow") processAlert("press", "yellow", `Πίεση: προσοχή (${latest.press.toFixed(1)} hPa)`, settings);
+    if (pLev === "red")    processAlert("press", "red",    `Πίεση: συναγερμός (${latest.press.toFixed(1)} hPa)`, settings);
+
+    // AIQ
+    const aLev = levelAIQ(latest.aiq);
+    if (aLev === "yellow") processAlert("aiq", "yellow", `AIQ: μέτρια ποιότητα αέρα (${latest.aiq.toFixed(0)})`, settings);
+    if (aLev === "red")    processAlert("aiq", "red",    `AIQ: κακή ποιότητα αέρα (${latest.aiq.toFixed(0)})`, settings);
+
+    // TANK1/2 (με βάση ποσοστό)
+    const t1Lev = levelTankPct(latest.tank1Pct);
+    if (t1Lev === "yellow") processAlert("tank1", "yellow", `Δεξαμενή 1: χαμηλά (${latest.tank1Pct}%)`, settings);
+    if (t1Lev === "red")    processAlert("tank1", "red",    `Δεξαμενή 1: πολύ χαμηλά (${latest.tank1Pct}%)`, settings);
+
+    const t2Lev = levelTankPct(latest.tank2Pct);
+    if (t2Lev === "yellow") processAlert("tank2", "yellow", `Δεξαμενή 2: χαμηλά (${latest.tank2Pct}%)`, settings);
+    if (t2Lev === "red")    processAlert("tank2", "red",    `Δεξαμενή 2: πολύ χαμηλά (${latest.tank2Pct}%)`, settings);
+  }
+
+  // expose για να το καλέσουμε από το υπάρχον fetch block
+  window.runAlertsFromLatestValues = runAlertsFromLatestValues;
+</script>
 </body>
 </html>
+
 
 
