@@ -1,0 +1,20 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+
+  <!-- εξωτερικός δακτύλιος -->
+  <circle cx="12" cy="12" r="7.2"></circle>
+
+  <!-- δόντια (8 συμμετρικά) -->
+  <path d="M12 2.2v2.1"></path>
+  <path d="M12 19.7v2.1"></path>
+  <path d="M2.2 12h2.1"></path>
+  <path d="M19.7 12h2.1"></path>
+
+  <path d="M4.55 4.55l1.48 1.48"></path>
+  <path d="M17.97 17.97l1.48 1.48"></path>
+  <path d="M19.45 4.55l-1.48 1.48"></path>
+  <path d="M6.03 17.97l-1.48 1.48"></path>
+
+  <!-- εσωτερικό -->
+  <circle cx="12" cy="12" r="2.6"></circle>
+</svg>
