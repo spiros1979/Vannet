@@ -813,9 +813,17 @@
 
   // expose για να το καλέσουμε από το υπάρχον fetch block
   window.runAlertsFromLatestValues = runAlertsFromLatestValues;
-</script>
+  </script>
+   // ===== TEST (βγάλ' το μετά) =====
+   setTimeout(() => {
+   showToast("TEST: Ειδοποίηση κίτρινο (δουλεύει)", "yellow");
+   setTimeout(() => showToast("TEST: Ειδοποίηση κόκκινο (δουλεύει)", "red"), 1200);
+   }, 800);
+
+
 </body>
 </html>
+
 
 
 
