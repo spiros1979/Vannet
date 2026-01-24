@@ -1,309 +1,365 @@
-document.getElementById('update-data').addEventListener('click', function() {
-    loadDataAndUpdateCharts();
-});
+//------------------------------------------------------------
+// appumidit.js (Πλήρης διορθωμένη έκδοση)
+//------------------------------------------------------------
 
+//==========================================================
+// 1. Βοηθητική συνάρτηση: "dd/MM/yyyy HH:mm:ss" → Date()
+//==========================================================
+function parseDateString(dateString) {
+    try {
+        const safeString = dateString || "";
+        const [datePart, timePart] = safeString.split(" ");
+
+        if (!datePart) throw new Error("Missing date part");
+
+        const [day, month, year] = datePart.split("/").map(Number);
+
+        let hours = 0, minutes = 0, seconds = 0;
+
+        if (timePart) {
+            const parts = timePart.split(":").map(Number);
+            hours   = parts[0] ?? 0;
+            minutes = parts[1] ?? 0;
+            seconds = parts[2] ?? 0;
+        }
+
+        const d = new Date(year, month - 1, day, hours, minutes, seconds);
+        if (isNaN(d.getTime())) {
+            throw new Error("Invalid date");
+        }
+        return d;
+    } catch (err) {
+        console.error("Σφάλμα parseDateString:", dateString, err);
+        return new Date(NaN);
+    }
+}
+
+//==========================================================
+// 2. Φόρτωμα δεδομένων από Google Script
+//==========================================================
 function loadDataAndUpdateCharts() {
-    const url = 'https://script.google.com/macros/s/AKfycbxd1U-hm2xo79srYB-o9AdgHBBCKOrbaL4fFzdJlXbzhpV08Sq8Tua6qk_5Q78cJWFZ/exec'; 
+    const url = "https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read";
 
     fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            processAndDisplayData(data);
+        .then(r => {
+            if (!r.ok) {
+                throw new Error("HTTP error " + r.status);
+            }
+            return r.json();
         })
-        .catch(error => console.error('Errore durante il fetch dei dati:', error));
+        .then(data => processAndDisplayData(data))
+        .catch(err => {
+            console.error("Σφάλμα φόρτωσης/επεξεργασίας δεδομένων:", err);
+            const latest = document.getElementById("latest-temp");
+            if (latest) {
+                latest.textContent = "Σφάλμα φόρτωσης δεδομένων";
+            }
+        });
 }
 
-function parseDateString(dateString) {
-    // First, split the string by the comma, if it exists
-    let [datePart, timePart] = dateString.split(', ');
-
-    // If there's no comma, try splitting by a space (for the cases without a comma)
-    if (!timePart) {
-        [datePart, timePart] = dateString.split(' ');
-    }
-
-    // Split the date component into day, month, and year
-    const [day, month, year] = datePart.split('/').map(Number);
-
-    // Split the time component into hours, minutes, and seconds (or default to 0 if missing)
-    let [hours, minutes, seconds] = [0, 0, 0];
-    if (timePart) {
-        [hours, minutes, seconds] = timePart.split(':').map(Number);
-    }
-
-    // Create a new Date object using the parsed values
-    return new Date(year, month - 1, day, hours, minutes, seconds);
-}
-
+//==========================================================
+// 3. Επεξεργασία δεδομένων
+//==========================================================
 function processAndDisplayData(data) {
-    // Pre-process data
-	const processedData = data.map(row => {
-		let temperatura = row.Umidità;
-		if (typeof temperatura === 'string') {
-			temperatura = parseFloat(temperatura.replace(',', '.'));
-		} else if (typeof temperatura !== 'number') {
-			console.error('Campo Umidità non trovato o non valido:', row);
-			temperatura = NaN;  // Segna come non valido se non è un numero o stringa
-		}
-
-		// Parsing della data
-		const parsedDate = new Date(row.Data);
-		if (isNaN(parsedDate.getTime())) {
-			console.error('Data non valida:', row.Data);
-		}
-
-		return {
-			...row,
-			Data: parsedDate,  // Assicurati che questa data sia valida
-			Umidità: temperatura   // Usa il valore corretto della temperatura
-		};
-	});
-
-    // Verifica se ci sono dati validi
-    if (processedData.every(row => isNaN(row.Umidità))) {
-        console.error('Tutti i valori di temperatura sono non validi.');
+    if (!Array.isArray(data)) {
+        console.error("Τα δεδομένα δεν είναι array:", data);
+        const latest = document.getElementById("latest-temp");
+        if (latest) latest.textContent = "Σφάλμα: μη έγκυρη μορφή δεδομένων";
         return;
     }
 
-    // Filtraggio dei dati basato sul filtro selezionato per il primo grafico
-    const timeFilter = document.getElementById('timeFilter').value;
-    const filteredDataMinuto = filterDataByTime(processedData, timeFilter);
-    
-    if (filteredDataMinuto.length === 0) {
-        console.error("Nessun dato disponibile dopo il filtraggio.");
-        document.getElementById('latest-temp').textContent = "Nessun dato disponibile.";
+    // 3.1 Μετατροπή & καθάρισμα
+    let processed = data.map(row => {
+        // Υγρασία
+        const humRaw = Number(row["Umidità"]);
+        const hum = isNaN(humRaw) ? NaN : humRaw;
+
+        // Ημερομηνία
+        const parsedDate = parseDateString(row.Data);
+
+        return {
+            ...row,
+            Data: parsedDate,
+            Umidità: hum
+        };
+    });
+
+    // Πετάμε σειρές με invalid Date
+    processed = processed.filter(r =>
+        r.Data instanceof Date && !isNaN(r.Data.getTime())
+    );
+
+    if (!processed.length) {
+        document.getElementById("latest-temp").textContent =
+            "Δεν υπάρχουν διαθέσιμα δεδομένα (invalid ημερομηνίες)";
         return;
     }
 
-    // Latest temperature
-    const latestTemp = filteredDataMinuto[filteredDataMinuto.length - 1].Umidità;
-    document.getElementById('latest-temp').textContent = `Ultima umidità rilevata: ${latestTemp.toFixed(2)}%`;
+    // 3.2 Φίλτρο χρόνου
+    const timeFilterEl = document.getElementById("timeFilter");
+    const filter = timeFilterEl ? timeFilterEl.value : "all";
 
-    // Last update time
-    const lastUpdateTime = new Date().toLocaleString('it-IT', { hour12: false });
-    document.getElementById('last-update').textContent = `Ultimo aggiornamento: ${lastUpdateTime}`;
+    let filtered = filterDataByTime(processed, filter);
 
-    // Preparazione dei dati per il primo grafico (minuto per minuto)
-    const labelsMinuto = filteredDataMinuto.map(row => row.Data.toLocaleString('it-IT'));
-    const dataMinuto = filteredDataMinuto.map(row => row.Umidità);
+    // Πετάμε σειρές με NaN υγρασία
+    filtered = filtered.filter(r => !isNaN(r.Umidità));
 
-    // Preparazione dei dati per il secondo grafico (media oraria)
-    const hourlyData = aggregateHourly(filteredDataMinuto);
-    const labelsOra = hourlyData.map(row => row.label);
-    const dataOra = hourlyData.map(row => row.meanTemp);
-    const ciUpper = hourlyData.map(row => row.ciUpper);
-    const ciLower = hourlyData.map(row => row.ciLower);
+    if (!filtered.length) {
+        document.getElementById("latest-temp").textContent =
+            "Δεν υπάρχουν διαθέσιμα δεδομένα (μετά το φίλτρο χρόνου)";
+        return;
+    }
 
-    // Aggiorna i grafici
+    // 3.3 Τελευταίο δείγμα
+    const last = filtered[filtered.length - 1];
+    document.getElementById("latest-temp").textContent =
+        `Τελευταία υγρασία: ${last.Umidità.toFixed(2)} %`;
+
+    // 3.4 Timestamp Τελευταία λήψη δεδομένων (από filtered)
+    if (filtered.length > 0) {
+        const lastSample = filtered[filtered.length - 1];
+
+        const d = lastSample.Data instanceof Date ? lastSample.Data : new Date(lastSample.Data);
+        const lastUpdateTime = isNaN(d.getTime())
+            ? String(lastSample.Data)
+            : d.toLocaleString("el-GR", { hour12: false });
+
+        const el = document.getElementById("last-update");
+        if (el) {
+            el.textContent = `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+        }
+    }
+
+    // 3.5 Labels & data για λεπτό-λεπτό
+    const labelsMinuto = filtered.map(row =>
+        row.Data.toLocaleTimeString("el-GR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false
+        })
+    );
+
+    const dataMinuto = filtered.map(row => row.Umidità);
+
+    // 3.6 Ωριαία ομαδοποίηση
+    const hourly = aggregateHourly(filtered);
+
+    const labelsOra = hourly.map(h => h.label);
+    const dataOra   = hourly.map(h => h.meanHum);
+    const ciUpper   = hourly.map(h => h.ciUpper);
+    const ciLower   = hourly.map(h => h.ciLower);
+
+    // 3.7 Δημιουργία γραφημάτων
     updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower);
 }
 
+//==========================================================
+// 4. Φιλτράρισμα ανά 1h / 3h / 6h / 12h / 24h
+//==========================================================
 function filterDataByTime(data, filter) {
-    const lastTimestamp = data[data.length - 1].Data.getTime();
+    if (!data.length) return [];
 
-    let timeFrame = 0;
+    const lastTS = data[data.length - 1].Data.getTime();
+    if (isNaN(lastTS)) return [];
+
+    let frame = 0;
+
     switch (filter) {
-        case 'last24h':
-            timeFrame = 24 * 60 * 60 * 1000; // 24 ore in millisecondi
-            break;
-        case 'last12h':
-            timeFrame = 12 * 60 * 60 * 1000; // 12 ore in millisecondi
-            break;
-        case 'last6h':
-            timeFrame = 6 * 60 * 60 * 1000;  // 6 ore in millisecondi
-            break;
-        case 'last3h':
-            timeFrame = 3 * 60 * 60 * 1000;  // 3 ore in millisecondi
-            break;
-		case 'last1h':
-            timeFrame = 1 * 60 * 60 * 1000;  // 1 ore in millisecondi
-            break;
+        case "last24h": frame = 24 * 3600 * 1000; break;
+        case "last12h": frame = 12 * 3600 * 1000; break;
+        case "last6h":  frame =  6 * 3600 * 1000; break;
+        case "last3h":  frame =  3 * 3600 * 1000; break;
+        case "last1h":  frame =  1 * 3600 * 1000; break;
         default:
+            // "all"
             return data;
     }
 
-    const filteredData = data.filter(row => row.Data.getTime() >= (lastTimestamp - timeFrame));
-    console.log(`Dati filtrati (${filter}):`, filteredData);
-    return filteredData;
+    const fromTS = lastTS - frame;
+    return data.filter(r => r.Data.getTime() >= fromTS);
 }
 
+//==========================================================
+// 5. Ομαδοποίηση ανά ώρα με CI
+//==========================================================
 function aggregateHourly(data) {
-    const grouped = data.reduce((acc, curr) => {
-        const hour = curr.Data.getHours();
-        const date = curr.Data.toLocaleDateString('it-IT');
+    const groups = {};
+
+    data.forEach(row => {
+        if (!(row.Data instanceof Date) || isNaN(row.Data.getTime())) return;
+        if (isNaN(row.Umidità)) return;
+
+        const d = row.Data;
+
+        const date = d.toLocaleDateString("el-GR");
+        const hour = d.getHours().toString().padStart(2, "0");
+
         const key = `${date} ${hour}:00`;
 
-        if (!acc[key]) {
-            acc[key] = [];
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(row.Umidità);
+    });
+
+    return Object.keys(groups).map(key => {
+        const values = groups[key];
+        if (!values.length) {
+            return {
+                label: key,
+                meanHum: NaN,
+                ciUpper: NaN,
+                ciLower: NaN
+            };
         }
 
-        acc[key].push(curr.Umidità);
-        return acc;
-    }, {});
+        const mean = values.reduce((a, b) => a + b, 0) / values.length;
 
-    return Object.keys(grouped).map(key => {
-        const values = grouped[key];
-        const meanTemp = values.reduce((a, b) => a + b, 0) / values.length;
-        const stdErr = Math.sqrt(values.reduce((sum, val) => sum + Math.pow(val - meanTemp, 2), 0) / (values.length - 1)) / Math.sqrt(values.length);
-        const ci95 = 1.96 * stdErr;
+        let stderr = 0;
+        if (values.length > 1) {
+            const variance =
+                values.reduce((s, v) => s + (v - mean) ** 2, 0) / (values.length - 1);
+            stderr = Math.sqrt(variance) / Math.sqrt(values.length);
+        }
+
+        const ci = 1.96 * stderr;
 
         return {
             label: key,
-            meanTemp,
-            ciUpper: meanTemp + ci95,
-            ciLower: meanTemp - ci95
+            meanHum: mean,
+            ciUpper: mean + ci,
+            ciLower: mean - ci
         };
-    });
+    }).filter(r => !isNaN(r.meanHum));
 }
 
+//==========================================================
+// 6. Δημιουργία ΓΡΑΦΗΜΑΤΩΝ
+//==========================================================
 function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower) {
-    const minutoCtx = document.getElementById('minutoChart').getContext('2d');
-    const oraCtx = document.getElementById('oraChart').getContext('2d');
+    const canvasMin = document.getElementById("minutoChart");
+    const canvasOra = document.getElementById("oraChart");
 
-    if (window.minutoChart && typeof window.minutoChart.destroy === 'function') {
-        window.minutoChart.destroy(); // Destroy the previous chart, if it exists
+    if (!canvasMin || !canvasOra) {
+        console.warn("Δεν βρέθηκαν τα canvas για τα γραφήματα.");
+        return;
     }
 
-    if (window.oraChart && typeof window.oraChart.destroy === 'function') {
-        window.oraChart.destroy(); // Destroy the previous chart, if it exists
+    const ctxMin = canvasMin.getContext("2d");
+    const ctxOra = canvasOra.getContext("2d");
+
+    // Ασφαλές destroy: μόνο αν είναι object ΚΑΙ έχει destroy()
+    if (window.minutoChart && typeof window.minutoChart.destroy === "function") {
+        window.minutoChart.destroy();
+    }
+    if (window.oraChart && typeof window.oraChart.destroy === "function") {
+        window.oraChart.destroy();
     }
 
-    // First chart (minute by minute)
-    try {
-        window.minutoChart = new Chart(minutoCtx, {
-            type: 'line',
-            data: {
-                labels: labelsMinuto,
-                datasets: [{
-                    label: 'Umidità',
-                    data: dataMinuto,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    fill: false,
-                    tension: 0.1,
-					pointRadius: 0
-                }]
+    //------------------------------------------------------
+    // 6.1 Γράφημα λεπτό-λεπτό
+    //------------------------------------------------------
+    window.minutoChart = new Chart(ctxMin, {
+        type: "line",
+        data: {
+            labels: labelsMinuto,
+            datasets: [{
+                label: "Υγρασία (λεπτό-λεπτό)",
+                data: dataMinuto,
+                borderWidth: 2,
+                tension: 0.1,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false // Disable the legend
+            scales: {
+                x: {
+                    ticks: {
+                        callback: (value, index) =>
+                            index % 10 === 0 ? labelsMinuto[value] : ""
                     }
                 },
-                scales: {
-                    x: {
-                        display: true,
-                        title: { display: true, text: '' },
-                        ticks: {
-                            callback: function(value, index, ticks) {
-                                // Show only one label every 10 for example
-                                if (index % 10 === 0) {
-                                    const date = parseDateString(labelsMinuto[value]);
-                                    if (!isNaN(date.getTime())) {
-                                        return date.toLocaleDateString('it-IT');
-                                    } else {
-                                        console.error('Errore nella conversione della data:', labelsMinuto[value]);
-                                        return '';
-                                    }
-                                } else {
-                                    return ''; 
-                                }
-                            }
-                        }
-                    },
-                    y: {
-                        display: true,
-                        title: { display: true, text: 'Umidità (%)' }
-                    }
+                y: {
+                    title: { display: true, text: "Υγρασία (%)" }
                 }
             }
-        });
-    } catch (error) {
-        console.error('Errore durante la creazione del grafico minuto per minuto:', error);
-    }
+        }
+    });
 
-    // Second chart (hourly average with confidence intervals)
-	try {
-		window.oraChart = new Chart(oraCtx, {
-			type: 'line',
-			data: {
-				labels: labelsOra, 
-				datasets: [
-					{
-						label: 'Umidità Media Oraria',
-						data: dataOra,
-						borderColor: 'rgba(153, 102, 255, 1)',
-						fill: false,
-						tension: 0.1,
-						pointRadius: 0
-					},
-					{
-						label: 'C.I. 95%',
-						data: ciUpper,
-						borderColor: 'rgba(255, 159, 64, 0.2)',
-						fill: '-1',
-						backgroundColor: 'rgba(255, 159, 64, 0.2)',
-						borderWidth: 1,
-						pointRadius: 0
-					},
-					{
-						label: 'C.I. 95%',
-						data: ciLower,
-						borderColor: 'rgba(255, 159, 64, 0.2)',
-						fill: '-1',
-						backgroundColor: 'rgba(255, 159, 64, 0.2)',
-						borderWidth: 1,
-						pointRadius: 0
-					}
-				]
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				plugins: {
-					legend: {
-						display: false
-					}
-				},
-				scales: {
-					    x: {
-							display: true,
-							title: { display: true, text: '' },
-							ticks: {
-								callback: function(value, index, ticks) {
-									// Mostra solo un'etichetta ogni 3
-									if (index % 2 === 0) {
-										const dateLabel = labelsOra[value];
-										const [datePart, timePart] = dateLabel.split(' ');
-										return datePart; // Restituisce solo la data
-									} else {
-										return ''; // Non mostra nulla
-									}
-								}
-							}
-						},
-					y: {
-						display: true,
-						title: { display: true, text: 'Umidità (%)' }
-					}
-				}
-			}
-		});
-	} catch (error) {
-		console.error('Errore durante la creazione del grafico media oraria:', error);
-	}
-
+    //------------------------------------------------------
+    // 6.2 Γράφημα ωριαίας μέσης υγρασίας + CI
+    //------------------------------------------------------
+    window.oraChart = new Chart(ctxOra, {
+        type: "line",
+        data: {
+            labels: labelsOra,
+            datasets: [
+                {
+                    label: "Μέση υγρασία ανά ώρα",
+                    data: dataOra,
+                    borderWidth: 2,
+                    tension: 0.1,
+                    pointRadius: 0
+                },
+                {
+                    label: "95% CI (πάνω)",
+                    data: ciUpper,
+                    borderWidth: 1,
+                    tension: 0.1,
+                    pointRadius: 0
+                },
+                {
+                    label: "95% CI (κάτω)",
+                    data: ciLower,
+                    borderWidth: 1,
+                    tension: 0.1,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        callback: (value, index) =>
+                            index % 2 === 0 ? labelsOra[value] : ""
+                    }
+                },
+                y: {
+                    title: { display: true, text: "Υγρασία (%)" }
+                }
+            }
+        }
+    });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+//==========================================================
+// 7. Εκκίνηση όταν φορτώσει το DOM
+//==========================================================
+document.addEventListener("DOMContentLoaded", function() {
+    // αρχικό φόρτωμα
     loadDataAndUpdateCharts();
 
-    document.getElementById('update-data').addEventListener('click', function() {
-        loadDataAndUpdateCharts();
-    });
+    // κουμπί ανανέωσης
+    const updateBtn = document.getElementById("update-data");
+    if (updateBtn) {
+        updateBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            loadDataAndUpdateCharts();
+        });
+    }
 
-    document.getElementById('timeFilter').addEventListener('change', function() {
-        loadDataAndUpdateCharts();
-    });
+    // dropdown φίλτρου
+    const timeFilterEl = document.getElementById("timeFilter");
+    if (timeFilterEl) {
+        timeFilterEl.addEventListener("change", loadDataAndUpdateCharts);
+    }
 });

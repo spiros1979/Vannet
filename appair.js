@@ -1,309 +1,305 @@
-document.getElementById('update-data').addEventListener('click', function() {
-    loadDataAndUpdateCharts();
-});
-
+// -------------------------------
+// Φόρτωμα δεδομένων από Apps Script
+// -------------------------------
 function loadDataAndUpdateCharts() {
-    const url = 'https://script.google.com/macros/s/AKfycbxd1U-hm2xo79srYB-o9AdgHBBCKOrbaL4fFzdJlXbzhpV08Sq8Tua6qk_5Q78cJWFZ/exec'; 
+    const url = 'https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read';
 
     fetch(url)
         .then(response => response.json())
-        .then(data => {
-            processAndDisplayData(data);
-        })
-        .catch(error => console.error('Errore durante il fetch dei dati:', error));
+        .then(data => processAndDisplayData(data))
+        .catch(error => console.error('Σφάλμα κατά την ανάκτηση δεδομένων:', error));
 }
 
+// -----------------------------------------------
+// Μετατροπή dd/MM/yyyy HH:mm:ss → JS Date object
+// -----------------------------------------------
 function parseDateString(dateString) {
-    // First, split the string by the comma, if it exists
-    let [datePart, timePart] = dateString.split(', ');
+    if (!dateString) return new Date(NaN);
 
-    // If there's no comma, try splitting by a space (for the cases without a comma)
-    if (!timePart) {
-        [datePart, timePart] = dateString.split(' ');
-    }
-
-    // Split the date component into day, month, and year
+    let [datePart, timePart] = dateString.split(' ');
     const [day, month, year] = datePart.split('/').map(Number);
 
-    // Split the time component into hours, minutes, and seconds (or default to 0 if missing)
     let [hours, minutes, seconds] = [0, 0, 0];
     if (timePart) {
         [hours, minutes, seconds] = timePart.split(':').map(Number);
     }
-
-    // Create a new Date object using the parsed values
     return new Date(year, month - 1, day, hours, minutes, seconds);
 }
 
+// -------------------------------------------------------------
+// Επεξεργασία & εμφάνιση δεδομένων (AIQ + 2 γραφήματα)
+// -------------------------------------------------------------
 function processAndDisplayData(data) {
-    // Pre-process data
-	const processedData = data.map(row => {
-		let temperatura = row.gas;
-		if (typeof temperatura === 'string') {
-			temperatura = parseFloat(temperatura.replace(',', '.'));
-		} else if (typeof temperatura !== 'number') {
-			console.error('Campo gas non trovato o non valido:', row);
-			temperatura = NaN;  // Segna come non valido se non è un numero o stringa
-		}
 
-		// Parsing della data
-		const parsedDate = new Date(row.Data);
-		if (isNaN(parsedDate.getTime())) {
-			console.error('Data non valida:', row.Data);
-		}
+    // Προεπεξεργασία δεδομένων – δουλεύουμε μόνο με AIQ
+    const processedData = data.map(row => {
+        let aiqVal = row.aiq;
 
-		return {
-			...row,
-			Data: parsedDate,  // Assicurati che questa data sia valida
-			gas: temperatura   // Usa il valore corretto della temperatura
-		};
-	});
+        if (typeof aiqVal === 'string') {
+            aiqVal = parseFloat(aiqVal.replace(',', '.'));
+        } else if (typeof aiqVal !== 'number') {
+            console.error('Μη έγκυρη τιμή AIQ:', row);
+            aiqVal = NaN;
+        }
 
-    // Verifica se ci sono dati validi
-    if (processedData.every(row => isNaN(row.gas))) {
-        console.error('Tutti i valori di temperatura sono non validi.');
+        const parsedDate = parseDateString(row.Data);
+
+        return {
+            ...row,
+            Data: parsedDate,
+            aiq: aiqVal
+        };
+    });
+
+    // Αν όλες οι τιμές AIQ είναι NaN → δεν έχουμε δεδομένα
+    if (processedData.every(row => isNaN(row.aiq))) {
+        document.getElementById('latest-temp').textContent =
+            'Δεν υπάρχουν διαθέσιμα δεδομένα AIQ.';
         return;
     }
 
-    // Filtraggio dei dati basato sul filtro selezionato per il primo grafico
+    // Φίλτρο χρόνου (όπως στα άλλα γραφήματα)
     const timeFilter = document.getElementById('timeFilter').value;
-    const filteredDataMinuto = filterDataByTime(processedData, timeFilter);
-    
-    if (filteredDataMinuto.length === 0) {
-        console.error("Nessun dato disponibile dopo il filtraggio.");
-        document.getElementById('latest-temp').textContent = "Nessun dato disponibile.";
+    const filteredData = filterDataByTime(processedData, timeFilter);
+
+    if (!filteredData.length) {
+        document.getElementById('latest-temp').textContent =
+            'Δεν υπάρχουν δεδομένα για το επιλεγμένο διάστημα.';
         return;
     }
 
-    // Latest temperature
-    const latestTemp = filteredDataMinuto[filteredDataMinuto.length - 1].gas;
-    document.getElementById('latest-temp').textContent = `Ultimo valore rilevato: ${latestTemp.toFixed(2)}kOhms`;
+    // Τελευταία τιμή AIQ
+    const lastRow = filteredData[filteredData.length - 1];
+    const latestAIQ = lastRow.aiq;
 
-    // Last update time
-    const lastUpdateTime = new Date().toLocaleString('it-IT', { hour12: false });
-    document.getElementById('last-update').textContent = `Ultimo aggiornamento: ${lastUpdateTime}`;
+    if (Number.isFinite(latestAIQ)) {
+        document.getElementById('latest-temp').textContent =
+            `Τελευταία τιμή AIQ: ${latestAIQ.toFixed(2)}`;
+    } else {
+        document.getElementById('latest-temp').textContent =
+            'Τελευταία τιμή AIQ: --';
+    }
 
-    // Preparazione dei dati per il primo grafico (minuto per minuto)
-    const labelsMinuto = filteredDataMinuto.map(row => row.Data.toLocaleString('it-IT'));
-    const dataMinuto = filteredDataMinuto.map(row => row.gas);
+    // Τελευταία λήψη δεδομένων (από το τελευταίο row του filteredData)
+    const lastSample = filteredData[filteredData.length - 1];
 
-    // Preparazione dei dati per il secondo grafico (media oraria)
-    const hourlyData = aggregateHourly(filteredDataMinuto);
+    const d = lastSample.Data instanceof Date ? lastSample.Data : new Date(lastSample.Data);
+    const lastUpdateTime = isNaN(d.getTime())
+        ? String(lastSample.Data)
+        : d.toLocaleString('el-GR', { hour12: false });
+
+    const el = document.getElementById('last-update');
+    if (el) {
+        el.textContent = `Τελευταία λήψη δεδομένων: ${lastUpdateTime}`;
+    }
+
+    // Labels + τιμές για 1ο γράφημα (λεπτό-λεπτό AIQ)
+    const labelsMinuto = filteredData.map(row =>
+        row.Data.toLocaleString('el-GR', {
+            hour12: false
+        })
+    );
+
+    const dataMinuto = filteredData.map(row => row.aiq);
+
+    // Ωριαία ομαδοποίηση AIQ
+    const hourlyData = aggregateHourly(filteredData);
+
     const labelsOra = hourlyData.map(row => row.label);
-    const dataOra = hourlyData.map(row => row.meanTemp);
-    const ciUpper = hourlyData.map(row => row.ciUpper);
-    const ciLower = hourlyData.map(row => row.ciLower);
+    const dataOra   = hourlyData.map(row => row.meanAiq);
+    const ciUpper   = hourlyData.map(row => row.ciUpper);
+    const ciLower   = hourlyData.map(row => row.ciLower);
 
-    // Aggiorna i grafici
     updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower);
 }
 
+// -----------------------------------------------
+// Φιλτράρισμα ανά χρονικό παράθυρο
+// -----------------------------------------------
 function filterDataByTime(data, filter) {
-    const lastTimestamp = data[data.length - 1].Data.getTime();
+    if (!data.length) return [];
 
-    let timeFrame = 0;
+    const lastTS = data[data.length - 1].Data.getTime();
+    let windowMs = 0;
+
     switch (filter) {
-        case 'last24h':
-            timeFrame = 24 * 60 * 60 * 1000; // 24 ore in millisecondi
-            break;
-        case 'last12h':
-            timeFrame = 12 * 60 * 60 * 1000; // 12 ore in millisecondi
-            break;
-        case 'last6h':
-            timeFrame = 6 * 60 * 60 * 1000;  // 6 ore in millisecondi
-            break;
-        case 'last3h':
-            timeFrame = 3 * 60 * 60 * 1000;  // 3 ore in millisecondi
-            break;
-		case 'last1h':
-            timeFrame = 1 * 60 * 60 * 1000;  // 1 ore in millisecondi
-            break;
+        case 'last24h': windowMs = 24 * 3600000; break;
+        case 'last12h': windowMs = 12 * 3600000; break;
+        case 'last6h':  windowMs =  6 * 3600000; break;
+        case 'last3h':  windowMs =  3 * 3600000; break;
+        case 'last1h':  windowMs =  1 * 3600000; break;
         default:
-            return data;
+            return data; // "all"
     }
 
-    const filteredData = data.filter(row => row.Data.getTime() >= (lastTimestamp - timeFrame));
-    console.log(`Dati filtrati (${filter}):`, filteredData);
-    return filteredData;
+    return data.filter(row =>
+        row.Data instanceof Date &&
+        !isNaN(row.Data.getTime()) &&
+        row.Data.getTime() >= lastTS - windowMs
+    );
 }
 
+// ----------------------------------------------
+// Ωριαία ομαδοποίηση AIQ με 95% CI
+// ----------------------------------------------
 function aggregateHourly(data) {
-    const grouped = data.reduce((acc, curr) => {
-        const hour = curr.Data.getHours();
-        const date = curr.Data.toLocaleDateString('it-IT');
+    const grouped = {};
+
+    data.forEach(row => {
+        if (!(row.Data instanceof Date) || isNaN(row.Data.getTime())) return;
+
+        const d = row.Data;
+        const date = d.toLocaleDateString('el-GR');
+        const hour = d.getHours().toString().padStart(2, '0');
         const key = `${date} ${hour}:00`;
 
-        if (!acc[key]) {
-            acc[key] = [];
-        }
-
-        acc[key].push(curr.gas);
-        return acc;
-    }, {});
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(row.aiq);
+    });
 
     return Object.keys(grouped).map(key => {
-        const values = grouped[key];
-        const meanTemp = values.reduce((a, b) => a + b, 0) / values.length;
-        const stdErr = Math.sqrt(values.reduce((sum, val) => sum + Math.pow(val - meanTemp, 2), 0) / (values.length - 1)) / Math.sqrt(values.length);
-        const ci95 = 1.96 * stdErr;
+        const arr = grouped[key];
+        const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+
+        let stdErr = 0;
+        if (arr.length > 1) {
+            const variance =
+                arr.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) /
+                (arr.length - 1);
+            stdErr = Math.sqrt(variance) / Math.sqrt(arr.length);
+        }
+
+        const ci = 1.96 * stdErr;
 
         return {
             label: key,
-            meanTemp,
-            ciUpper: meanTemp + ci95,
-            ciLower: meanTemp - ci95
+            meanAiq: mean,
+            ciUpper: mean + ci,
+            ciLower: mean - ci
         };
     });
 }
 
+// ------------------------
+// Ενημέρωση γραφημάτων
+// ------------------------
 function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower) {
+
     const minutoCtx = document.getElementById('minutoChart').getContext('2d');
-    const oraCtx = document.getElementById('oraChart').getContext('2d');
+    const oraCtx    = document.getElementById('oraChart').getContext('2d');
 
     if (window.minutoChart && typeof window.minutoChart.destroy === 'function') {
-        window.minutoChart.destroy(); // Destroy the previous chart, if it exists
+        window.minutoChart.destroy();
     }
-
     if (window.oraChart && typeof window.oraChart.destroy === 'function') {
-        window.oraChart.destroy(); // Destroy the previous chart, if it exists
+        window.oraChart.destroy();
     }
 
-    // First chart (minute by minute)
-    try {
-        window.minutoChart = new Chart(minutoCtx, {
-            type: 'line',
-            data: {
-                labels: labelsMinuto,
-                datasets: [{
-                    label: 'gas',
-                    data: dataMinuto,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    fill: false,
-                    tension: 0.1,
-					pointRadius: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false // Disable the legend
+    // -- 1ο γράφημα: Δείκτης AIQ λεπτό-λεπτό --
+    window.minutoChart = new Chart(minutoCtx, {
+        type: 'line',
+        data: {
+            labels: labelsMinuto,
+            datasets: [{
+                label: 'Δείκτης AIQ',
+                data: dataMinuto,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1,
+                fill: false,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    ticks: {
+                        callback: function (value, index) {
+                            // Δείξε κάθε 10η ετικέτα (προαιρετικό για να μην γίνεται χαμός)
+                            if (index % 10 === 0) {
+                                return labelsMinuto[index];
+                            }
+                            return '';
+                        }
                     }
                 },
-                scales: {
-                    x: {
-                        display: true,
-                        title: { display: true, text: '' },
-                        ticks: {
-                            callback: function(value, index, ticks) {
-                                // Show only one label every 10 for example
-                                if (index % 10 === 0) {
-                                    const date = parseDateString(labelsMinuto[value]);
-                                    if (!isNaN(date.getTime())) {
-                                        return date.toLocaleDateString('it-IT');
-                                    } else {
-                                        console.error('Errore nella conversione della data:', labelsMinuto[value]);
-                                        return '';
-                                    }
-                                } else {
-                                    return ''; 
-                                }
-                            }
-                        }
-                    },
-                    y: {
-                        display: true,
-                        title: { display: true, text: 'kOhms' }
-                    }
+                y: {
+                    title: { display: true, text: 'Δείκτης AIQ' }
                 }
             }
-        });
-    } catch (error) {
-        console.error('Errore durante la creazione del grafico minuto per minuto:', error);
-    }
+        }
+    });
 
-    // Second chart (hourly average with confidence intervals)
-	try {
-		window.oraChart = new Chart(oraCtx, {
-			type: 'line',
-			data: {
-				labels: labelsOra, 
-				datasets: [
-					{
-						label: 'kOhms Media Oraria',
-						data: dataOra,
-						borderColor: 'rgba(153, 102, 255, 1)',
-						fill: false,
-						tension: 0.1,
-						pointRadius: 0
-					},
-					{
-						label: 'C.I. 95%',
-						data: ciUpper,
-						borderColor: 'rgba(255, 159, 64, 0.2)',
-						fill: '-1',
-						backgroundColor: 'rgba(255, 159, 64, 0.2)',
-						borderWidth: 1,
-						pointRadius: 0
-					},
-					{
-						label: 'C.I. 95%',
-						data: ciLower,
-						borderColor: 'rgba(255, 159, 64, 0.2)',
-						fill: '-1',
-						backgroundColor: 'rgba(255, 159, 64, 0.2)',
-						borderWidth: 1,
-						pointRadius: 0
-					}
-				]
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				plugins: {
-					legend: {
-						display: false
-					}
-				},
-				scales: {
-					    x: {
-							display: true,
-							title: { display: true, text: '' },
-							ticks: {
-								callback: function(value, index, ticks) {
-									// Mostra solo un'etichetta ogni 3
-									if (index % 2 === 0) {
-										const dateLabel = labelsOra[value];
-										const [datePart, timePart] = dateLabel.split(' ');
-										return datePart; // Restituisce solo la data
-									} else {
-										return ''; // Non mostra nulla
-									}
-								}
-							}
-						},
-					y: {
-						display: true,
-						title: { display: true, text: 'gas (%)' }
-					}
-				}
-			}
-		});
-	} catch (error) {
-		console.error('Errore durante la creazione del grafico media oraria:', error);
-	}
-
+    // -- 2ο γράφημα: Ωριαία μέση τιμή AIQ + 95% CI --
+    window.oraChart = new Chart(oraCtx, {
+        type: 'line',
+        data: {
+            labels: labelsOra,
+            datasets: [
+                {
+                    label: 'Μέσος Δείκτης AIQ ανά ώρα',
+                    data: dataOra,
+                    borderColor: '#4E9DF2',
+                    tension: 0.1,
+                    fill: false,
+                    pointRadius: 0
+                },
+                {
+                    label: '95% CI Άνω',
+                    data: ciUpper,
+                    borderColor: '#C44127',
+                    backgroundColor: 'rgba(196, 65, 39, 0.15)',
+                    fill: '-1',
+                    pointRadius: 0
+                },
+                {
+                    label: '95% CI Κάτω',
+                    data: ciLower,
+                    borderColor: '#E0AA14',
+                    backgroundColor: 'rgba(224, 170, 20, 0.15)',
+                    fill: '-1',
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    ticks: {
+                        callback: function (value, index) {
+                            // Δείξε κάθε 2η ετικέτα για να φαίνονται καθαρά
+                            if (index % 2 === 0) {
+                                return labelsOra[index];
+                            }
+                            return '';
+                        }
+                    }
+                },
+                y: {
+                    title: { display: true, text: 'Δείκτης AIQ' }
+                }
+            }
+        }
+    });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+// ----------------------------------------
+// Αυτόματο φόρτωμα όταν ανοίγει η σελίδα
+// ----------------------------------------
+document.addEventListener('DOMContentLoaded', function () {
     loadDataAndUpdateCharts();
 
-    document.getElementById('update-data').addEventListener('click', function() {
-        loadDataAndUpdateCharts();
-    });
+    document.getElementById('update-data')
+        .addEventListener('click', function (e) {
+            e.preventDefault();
+            loadDataAndUpdateCharts();
+        });
 
-    document.getElementById('timeFilter').addEventListener('change', function() {
-        loadDataAndUpdateCharts();
-    });
+    document.getElementById('timeFilter')
+        .addEventListener('change', loadDataAndUpdateCharts);
 });

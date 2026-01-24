@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="el">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#bcadaf">
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
+  <title>Δεξαμενή 1 - Στάθμη</title>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background-color: rgb(238, 238, 237);
+      color: #241e1d;
+    }
+
+    .banner {
+      background-color: rgb(188, 173, 175);
+      padding: 20px 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #dee2e6;
+      width: 100%;
+      color: #241e1d;
+    }
+
+    .banner-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    nav {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-item {
+      margin-left: 20px;
+      display: inline-block;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .nav-item img {
+      width: 24px;
+      height: 24px;
+      display: inline-block;
+      filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+    }
+
+    @media (max-width: 576px) {
+      nav {
+        justify-content: center;
+      }
+
+      .nav-item {
+        margin-left: 10px;
+        margin-bottom: 10px;
+      }
+    }
+
+    .counter {
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .counter h3 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .big-value {
+      font-size: 34px;
+      margin: 0;
+    }
+
+    .subtle {
+      font-size: 13px;
+      color: #555;
+      margin-top: 6px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .stats-row span {
+      display: inline-block;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .chart-wrap {
+      height: 320px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="banner">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-6">
+          <div class="banner-title">Δεξαμενή 1</div>
+          <div class="banner-date" id="last-update">Τελευταία λήψη δεδομένων: --/--/---- --:--:--</div>
+        </div>
+
+        <div class="col-6 text-right">
+          <nav>
+            <a class="nav-item" href="index.html"><img src="speedometer.svg" alt="Κεντρικός πίνακας"
+                title="Κεντρικός πίνακας"></a>
+
+            <a class="nav-item" href="charts.html"><img src="thermometer.svg" alt="Θερμοκρασία"
+                title="Γραφήματα θερμοκρασίας"></a>
+            <a class="nav-item" href="humcharts.html"><img src="drop-half-bottom.svg" alt="Υγρασία"
+                title="Γραφήματα υγρασίας"></a>
+            <a class="nav-item" href="presscharts.html"><img src="cloud-sun.svg" alt="Πίεση"
+                title="Γραφήματα πίεσης"></a>
+            <a class="nav-item" href="aircharts.html"><img src="fan.svg" alt="AIQ" title="Γραφήματα ποιότητας αέρα"></a>
+
+            <!-- <a class="nav-item" href="tank1.html"><img src="tank_1.svg" alt="Δεξαμενή 1" title="Δεξαμενή 1"></a> -->
+            <a class="nav-item" href="tank2.html"><img src="tank_2.svg" alt="Δεξαμενή 2" title="Δεξαμενή 2"></a>
+
+            <a class="nav-item" href="about.html"><img src="info.svg" alt="Πληροφορίες"
+                title="Σχετικά με τη σελίδα"></a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="counter">
+      <h3>Τρέχουσα στάθμη (Δεξαμενή 1 - 3000 lt)</h3>
+      <p id="latest-level" class="big-value">-- lt (--%)</p>
+
+      <div class="stats-row">
+        <span id="level-min">Ελάχιστο: -- lt</span>
+        <span id="level-avg">Μ. όρος: -- lt</span>
+        <span id="level-max">Μέγιστο: -- lt</span>
+      </div>
+
+      <div class="controls mt-3">
+        <label for="timeFilter" class="mb-0">Διάστημα:</label>
+        <select id="timeFilter" class="form-control" style="max-width: 220px;">
+          <option value="all">Όλα</option>
+          <option value="last24h">Τελευταίες 24 ώρες</option>
+          <option value="last12h">Τελευταίες 12 ώρες</option>
+          <option value="last6h">Τελευταίες 6 ώρες</option>
+          <option value="last3h">Τελευταίες 3 ώρες</option>
+          <option value="last1h">Τελευταία 1 ώρα</option>
+        </select>
+
+        <button id="update-data" class="btn btn-outline-dark">Ανανέωση</button>
+      </div>
+
+      <p id="status" class="subtle">—</p>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="counter">
+          <h3>Στάθμη (λεπτό-λεπτό)</h3>
+          <div class="chart-wrap"><canvas id="minutoChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="counter">
+          <h3>Μέση στάθμη ανά ώρα</h3>
+          <div class="chart-wrap"><canvas id="oraChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- Footer placeholder -->
+  <div id="site-footer"></div>
+
+  <!-- 1) Φόρτωσε το κοινό footer -->
+  <script>
+    fetch('footer.html')
+      .then(r => r.text())
+      .then(html => {
+        const el = document.getElementById('site-footer');
+        if (el) el.innerHTML = html;
+      })
+      .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+  </script>
+  <script src="apptank1.js"></script>
+</body>
+
+</html>

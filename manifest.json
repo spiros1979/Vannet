@@ -1,0 +1,15 @@
+{
+  "name": "Vannet Monitor",
+  "short_name": "Vannet",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eeeeed",
+  "theme_color": "#bcadaf",
+  "icons": [
+    {
+      "src": "speedometer.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,90 +1,128 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="el">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grafici - Dashboard gas</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#bcadaf">
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
+    <title>BME680 - Γραφήματα Δείκτη Ποιότητας Αέρα (AIQ)</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-		body {
-			background-color: rgb(238, 238, 237);
-			color: #241e1d;
-		}
+    <style>
+        body {
+            background-color: rgb(238, 238, 237);
+            color: #241e1d;
+        }
 
-		/* Banner */
-		.banner {
-			background-color: rgb(188, 173, 175);
-			padding: 20px 10px;
-			margin-bottom: 20px;
-			border-bottom: 2px solid #dee2e6;
-			width: 100%;
-			color: #241e1d;
-		}
+        /* Banner */
+        .banner {
+            background-color: rgb(188, 173, 175);
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+            width: 100%;
+            color: #241e1d;
+        }
 
-		.banner-title {
-			font-size: 24px;
-			font-weight: bold;
-		}
+        .banner-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-		/* Icone di navigazione */
-		.nav-item img {
-			width: 24px;
-			height: 24px;
-			display: inline-block;
-			filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-		}
+        /* Εικονίδια πλοήγησης */
+        .nav-item img {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+        }
 
-		/* Contenitore grafico */
-		.chart-container {
-			position: relative;
-			height: 400px;
-			width: 100%;
-		}
+        /* Πλοήγηση */
+        nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
+        }
 
-		/* Navigazione */
-		nav {
-			display: flex;
-			justify-content: flex-end;
-			align-items: center;
-			flex-wrap: wrap; /* Consente il wrapping solo quando necessario */
-		}
+        .nav-item {
+            margin-left: 20px;
+            display: inline-block;
+            vertical-align: middle;
+            text-align: center;
+        }
 
-		.nav-item {
-			margin-left: 20px;
-			display: inline-block;
-			vertical-align: middle;
-			text-align: center;
-		}
+        /* Mobile / μικρές οθόνες */
+        @media (max-width: 576px) {
+            nav {
+                justify-content: center;
+            }
 
-		/* Media query per schermi piccoli */
-		@media (max-width: 576px) {
-			nav {
-				justify-content: center; /* Centra le icone in modalità mobile */
-			}
-			.nav-item {
-				margin-left: 10px; /* Riduce il margine per adattarsi meglio */
-				margin-bottom: 10px; /* Aggiunge spazio verticale tra le righe */
-			}
-		}
+            .nav-item {
+                margin-left: 10px;
+                margin-bottom: 10px;
+            }
+        }
 
-		/* Footer */
-		footer {
-			margin-top: 50px;
-			padding: 10px 0;
-			text-align: center;
-			font-size: 12px;
-			color: #241e1d;
-		}
+        /* Περιέκτης γραφημάτων */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
 
-		footer img {
-			margin: 0 10px;
-			width: 24px;
-			height: 24px;
-			cursor: pointer;
-			filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-		}
+        /* Υπόμνημα κάτω δεξιά για το 2ο γράφημα */
+        .chart-legend-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 15px;
+            margin-top: 5px;
+            margin-bottom: 25px;
+        }
 
+        .chart-legend-box {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 10px 14px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            font-size: 13px;
+            color: #241e1d;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 22px;
+            height: 4px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        /* Χρώματα υπομνήματος (όπως στα άλλα γραφήματα) */
+        .legend-mean {
+            background-color: #4E9DF2;
+            /* Μέση ωριαία τιμή AIQ */
+        }
+
+        .legend-ci-upper {
+            background-color: #C44127;
+            /* Άνω όριο 95% CI */
+        }
+
+        .legend-ci-lower {
+            background-color: #E0AA14;
+            /* Κάτω όριο 95% CI */
+        }
     </style>
 </head>
 
@@ -94,28 +132,31 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-6">
-                    <div class="banner-title">Dashboard qualità dell'aria</div>
-                    <div class="banner-date" id="last-update">Ultimo aggiornamento: --/--/---- --:--:--</div>
+                    <div class="banner-title">BME680 - Γραφήματα Δείκτη Ποιότητας Αέρα (AIQ)</div>
+                    <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
                 </div>
                 <div class="col-6 text-right">
                     <nav>
                         <a class="nav-item" href="#" id="update-data">
-                            <img src="arrows-counter-clockwise.svg" alt="Aggiorna" title="Aggiorna Dati">
+                            <img src="arrows-counter-clockwise.svg" alt="Ανανέωση" title="Ανανέωση δεδομένων">
                         </a>
                         <a class="nav-item" href="index.html">
-                            <img src="speedometer.svg" alt="Home" title="Dashboard">
+                            <img src="speedometer.svg" alt="Αρχική" title="Κεντρικός πίνακας">
                         </a>
                         <a class="nav-item" href="charts.html">
-                            <img src="thermometer.svg" alt="Grafici" title="Grafici temperatura">
+                            <img src="thermometer.svg" alt="Γραφήματα θερμοκρασίας" title="Γραφήματα θερμοκρασίας">
                         </a>
-						<a class="nav-item" href="humcharts.html">
-                            <img src="drop-half-bottom.svg" alt="Grafici" title="Grafici umidità">
+                        <a class="nav-item" href="humcharts.html">
+                            <img src="drop-half-bottom.svg" alt="Γραφήματα υγρασίας" title="Γραφήματα υγρασίας">
                         </a>
-						<a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Grafici" title="Grafici umidità">
+                        <a class="nav-item" href="presscharts.html">
+                            <img src="cloud-sun.svg" alt="Γραφήματα πίεσης" title="Γραφήματα πίεσης">
+                        </a>
+                        <a class="nav-item" href="settings.html">
+                            <img src="gear.svg" alt="Ρυθμίσεις" title="Ρυθμίσεις">
                         </a>
                         <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="About This Site">
+                            <img src="info.svg" alt="Πληροφορίες" title="Σχετικά με τη σελίδα">
                         </a>
                     </nav>
                 </div>
@@ -123,46 +164,85 @@
         </div>
     </div>
 
+    <!-- Περιεχόμενο -->
     <div class="container-fluid">
+
+        <!-- Τελευταία τιμή AIQ -->
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <h4 id="latest-temp">Ultimo valore rilevato: -- kOhms</h4>
+                <h4 id="latest-temp">Τελευταία τιμή AIQ: --</h4>
             </div>
         </div>
+
+        <!-- Επιλογή χρονικού φίλτρου -->
         <div class="row mb-4">
             <div class="col-12 text-center">
                 <select id="timeFilter" class="form-control w-35 mx-auto">
-                    <option value="all">Tutti i dati</option>
-                    <option value="last24h">24h</option>
-                    <option value="last12h">12h</option>
-                    <option value="last6h">6h</option>
-                    <option value="last3h">3h</option>
-					<option value="last1h">1h</option>
+                    <option value="all">Όλα τα δεδομένα</option>
+                    <option value="last24h">Τελευταίες 24 ώρες</option>
+                    <option value="last12h">Τελευταίες 12 ώρες</option>
+                    <option value="last6h">Τελευταίες 6 ώρες</option>
+                    <option value="last3h">Τελευταίες 3 ώρες</option>
+                    <option value="last1h">Τελευταία 1 ώρα</option>
                 </select>
             </div>
         </div>
+
+        <!-- Γραφήματα -->
         <div class="row">
+
+            <!-- Γράφημα AIQ λεπτό-λεπτό -->
             <div class="col-12">
                 <div class="chart-container">
                     <canvas id="minutoChart"></canvas>
                 </div>
             </div>
+
+            <!-- Γράφημα ωριαίας μέσης τιμής AIQ + 95% CI -->
             <div class="col-12 mt-4">
                 <div class="chart-container">
                     <canvas id="oraChart"></canvas>
                 </div>
+
+                <!-- Υπόμνημα κάτω δεξιά -->
+                <div class="chart-legend-wrapper">
+                    <div class="chart-legend-box">
+                        <div class="legend-item">
+                            <div class="legend-color legend-mean"></div>
+                            <span>Μέση ωριαία τιμή AIQ</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-ci-upper"></div>
+                            <span>Άνω όριο 95% CI</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-ci-lower"></div>
+                            <span>Κάτω όριο 95% CI</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
+
     </div>
 
-    <footer>
-        <p>About me</p>
-        <a href="https://github.com/GarauGarau"><img src="github-logo.svg" alt="GitHub Logo"></a>
-        <a href="https://x.com/alessiogarau22"><img src="x-logo.svg" alt="X (Twitter) Logo"></a>
-        <a href="https://alessiogarau.io"><img src="user.svg" alt="Personal Website"></a>
-    </footer>
+    <!-- Footer placeholder -->
+    <div id="site-footer"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- 1) Φόρτωσε το κοινό footer -->
+    <script>
+        fetch('footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const el = document.getElementById('site-footer');
+                if (el) el.innerHTML = html;
+            })
+            .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+    </script>
+
+    <!-- Μόνο το JS για AIQ (δεν χρειάζεται PapaParse εδώ) -->
     <script src="appair.js"></script>
 </body>
+
 </html>

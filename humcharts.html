@@ -1,282 +1,233 @@
-//------------------------------------------------------------
-// appumidit.js (ΝΕΑ ΔΙΟΡΘΩΜΕΝΗ ΕΚΔΟΣΗ)
-//------------------------------------------------------------
+<!DOCTYPE html>
+<html lang="el">
 
-// Ανανέωση δεδομένων όταν πατηθεί το εικονίδιο
-document.getElementById('update-data').addEventListener('click', function() {
-    loadDataAndUpdateCharts();
-});
-
-//==========================================================
-// Βοηθητική συνάρτηση: Μετατρέπει "dd/MM/yyyy HH:mm:ss" → Date()
-//==========================================================
-function parseDateString(dateString) {
-    try {
-        const [datePart, timePart] = dateString.split(" ");
-        const [day, month, year]   = datePart.split("/").map(Number);
-
-        let hours = 0, minutes = 0, seconds = 0;
-
-        if (timePart) {
-            [hours, minutes, seconds] = timePart.split(":").map(Number);
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#bcadaf">
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
+    <title>BME680 - Γραφήματα Υγρασίας</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: rgb(238, 238, 237);
+            color: #241e1d;
         }
 
-        return new Date(year, month - 1, day, hours, minutes, seconds);
-    }
-    catch (err) {
-        console.error("Σφάλμα parseDateString:", dateString);
-        return new Date(NaN);
-    }
-}
-
-//==========================================================
-// Φόρτωμα δεδομένων από Google Script
-//==========================================================
-function loadDataAndUpdateCharts() {
-
-    const url = "https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read";
-
-    fetch(url)
-        .then(r => r.json())
-        .then(data => processAndDisplayData(data))
-        .catch(err => console.error("Σφάλμα fetch:", err));
-}
-
-//==========================================================
-// Επεξεργασία δεδομένων
-//==========================================================
-function processAndDisplayData(data) {
-
-    const processed = data.map(row => {
-
-        // --- Υγρασία ---
-        let hum = Number(row["Umidità"]);
-        if (isNaN(hum)) {
-            hum = NaN;
+        .banner {
+            background-color: rgb(188, 173, 175);
+            padding: 20px 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+            width: 100%;
+            color: #241e1d;
         }
 
-        // --- Ημερομηνία ---
-        const parsed = parseDateString(row.Data);
-
-        return {
-            ...row,
-            Data: parsed,
-            Umidità: hum
-        };
-    });
-
-    // Φιλτράρισμα ανά φίλτρο χρόνου
-    const filter = document.getElementById("timeFilter").value;
-    const filtered = filterDataByTime(processed, filter);
-
-    if (!filtered.length) {
-        document.getElementById("latest-temp").textContent =
-            "Δεν υπάρχουν διαθέσιμα δεδομένα";
-        return;
-    }
-
-    // Τελευταίο δείγμα
-    const last = filtered[filtered.length - 1];
-    document.getElementById("latest-temp").textContent =
-        `Τελευταία υγρασία: ${last.Umidità.toFixed(2)} %`;
-
-    // Ενημέρωση timestamp εμφάνισης
-    const now = new Date().toLocaleString("el-GR", { hour12: false });
-    document.getElementById("last-update").textContent =
-        `Τελευταία ενημέρωση: ${now}`;
-
-    //------------------------------------------------------
-    // LABELS **24ωρης μορφής** για το λεπτό-λεπτό γράφημα
-    //------------------------------------------------------
-    const labelsMinuto = filtered.map(row =>
-        row.Data.toLocaleTimeString("el-GR", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false
-        })
-    );
-
-    const dataMinuto = filtered.map(row => row.Umidità);
-
-    //------------------------------------------------------
-    // Ωριαία ομαδοποίηση
-    //------------------------------------------------------
-    const hourly = aggregateHourly(filtered);
-
-    const labelsOra = hourly.map(h => h.label);
-    const dataOra   = hourly.map(h => h.meanHum);
-    const ciUpper   = hourly.map(h => h.ciUpper);
-    const ciLower   = hourly.map(h => h.ciLower);
-
-    //------------------------------------------------------
-    // Δημιουργία γραφημάτων
-    //------------------------------------------------------
-    updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower);
-}
-
-//==========================================================
-// Φιλτράρισμα ανά 1h / 3h / 6h / 12h / 24h
-//==========================================================
-function filterDataByTime(data, filter) {
-
-    const lastTS = data[data.length - 1].Data.getTime();
-    let frame = 0;
-
-    switch (filter) {
-        case "last24h": frame = 24 * 3600 * 1000; break;
-        case "last12h": frame = 12 * 3600 * 1000; break;
-        case "last6h":  frame =  6 * 3600 * 1000; break;
-        case "last3h":  frame =  3 * 3600 * 1000; break;
-        case "last1h":  frame =  1 * 3600 * 1000; break;
-        default: return data;
-    }
-
-    return data.filter(r => r.Data.getTime() >= lastTS - frame);
-}
-
-//==========================================================
-// Ομαδοποίηση ανά ώρα με CI
-//==========================================================
-function aggregateHourly(data) {
-
-    const groups = {};
-
-    data.forEach(row => {
-        const d = row.Data;
-
-        const date = d.toLocaleDateString("el-GR");
-        const hour = d.getHours().toString().padStart(2, "0");
-
-        const key = `${date} ${hour}:00`;
-
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(row.Umidità);
-    });
-
-    return Object.keys(groups).map(key => {
-        const values = groups[key];
-        const mean = values.reduce((a, b) => a + b, 0) / values.length;
-
-        let stderr = 0;
-        if (values.length > 1) {
-            const variance =
-                values.reduce((s, v) => s + (v - mean) ** 2, 0) / (values.length - 1);
-            stderr = Math.sqrt(variance) / Math.sqrt(values.length);
+        .banner-title {
+            font-size: 24px;
+            font-weight: bold;
         }
 
-        const ci = 1.96 * stderr;
-
-        return {
-            label: key,
-            meanHum: mean,
-            ciUpper: mean + ci,
-            ciLower: mean - ci
-        };
-    });
-}
-
-//==========================================================
-// Δημιουργία ΓΡΑΦΗΜΑΤΩΝ
-//==========================================================
-function updateCharts(labelsMinuto, dataMinuto, labelsOra, dataOra, ciUpper, ciLower) {
-
-    const ctxMin = document.getElementById("minutoChart").getContext("2d");
-    const ctxOra = document.getElementById("oraChart").getContext("2d");
-
-    if (window.minutoChart) window.minutoChart.destroy();
-    if (window.oraChart) window.oraChart.destroy();
-
-    //------------------------------------------------------
-    // Γράφημα λεπτό-λεπτό (πρώτο)
-    //------------------------------------------------------
-    window.minutoChart = new Chart(ctxMin, {
-        type: "line",
-        data: {
-            labels: labelsMinuto,
-            datasets: [{
-                label: "Υγρασία",
-                data: dataMinuto,
-                borderColor: "rgba(75, 192, 192, 1)",
-                tension: 0.1,
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }},
-            scales: {
-                x: {
-                    ticks: {
-                        callback: (value, index) =>
-                            index % 10 === 0 ? labelsMinuto[value] : ""
-                    }
-                },
-                y: {
-                    title: { display: true, text: "Υγρασία (%)" }
-                }
-            }
+        .nav-item img {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
         }
-    });
 
-    //------------------------------------------------------
-    // Γράφημα ωριαίας μέσης υγρασίας + CI
-    //------------------------------------------------------
-    window.oraChart = new Chart(ctxOra, {
-        type: "line",
-        data: {
-            labels: labelsOra,
-            datasets: [
-                {
-                    label: "Μέση υγρασία ανά ώρα",
-                    data: dataOra,
-                    borderColor: "rgba(153, 102, 255, 1)",
-                    tension: 0.1,
-                    pointRadius: 0
-                },
-                {
-                    label: "95% CI",
-                    data: ciUpper,
-                    borderColor: "rgba(255, 159, 64, 0.2)",
-                    backgroundColor: "rgba(255, 159, 64, 0.2)",
-                    fill: "-1",
-                    pointRadius: 0
-                },
-                {
-                    label: "95% CI",
-                    data: ciLower,
-                    borderColor: "rgba(255, 159, 64, 0.2)",
-                    backgroundColor: "rgba(255, 159, 64, 0.2)",
-                    fill: "origin",
-                    pointRadius: 0
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false }},
-            scales: {
-                x: {
-                    ticks: {
-                        callback: (value, index) =>
-                            index % 2 === 0 ? labelsOra[value] : ""
-                    }
-                },
-                y: {
-                    title: { display: true, text: "Υγρασία (%)" }
-                }
-            }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
         }
-    });
-}
 
-//==========================================================
-// Εκκίνηση
-//==========================================================
-document.addEventListener("DOMContentLoaded", function() {
-    loadDataAndUpdateCharts();
+        /* Τίτλοι γραφημάτων */
+        .chart-title {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #241e1d;
+        }
 
-    document.getElementById("update-data").addEventListener("click", loadDataAndUpdateCharts);
-    document.getElementById("timeFilter").addEventListener("change", loadDataAndUpdateCharts);
-});
+        /* Υπόμνημα */
+        .chart-legend-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 15px;
+            margin-top: 5px;
+            margin-bottom: 25px;
+        }
+
+        .chart-legend-box {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 10px 14px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            font-size: 13px;
+            color: #241e1d;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 22px;
+            height: 4px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+
+        /* ==== ΤΕΛΙΚΑ ΖΗΤΟΥΜΕΝΑ ΧΡΩΜΑΤΑ ==== */
+
+        /* Μέση ωριαία (#4E9DF2) */
+        .legend-mean {
+            background-color: #4E9DF2;
+        }
+
+        /* Upper CI (#C44127) */
+        .legend-ci-upper {
+            background-color: #C44127;
+        }
+
+        /* Lower CI (#E0AA14) */
+        .legend-ci-lower {
+            background-color: #E0AA14;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Banner -->
+    <div class="banner">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-6">
+                    <div class="banner-title">BME680 - Γραφήματα Υγρασίας</div>
+                    <div class="banner-date" id="last-update">Τελευταία ενημέρωση: --/--/---- --:--:--</div>
+                </div>
+
+                <div class="col-6 text-right">
+                    <nav>
+                        <a class="nav-item" href="#" id="update-data">
+                            <img src="arrows-counter-clockwise.svg" alt="Ανανέωση" title="Ανανέωση δεδομένων">
+                        </a>
+                        <a class="nav-item" href="index.html">
+                            <img src="speedometer.svg" alt="Αρχική" title="Κεντρικός πίνακας">
+                        </a>
+                        <a class="nav-item" href="charts.html">
+                            <img src="thermometer.svg" alt="Γραφήματα θερμοκρασίας" title="Γραφήματα θερμοκρασίας">
+                        </a>
+                        <a class="nav-item" href="presscharts.html">
+                            <img src="cloud-sun.svg" alt="Γραφήματα πίεσης" title="Γραφήματα πίεσης">
+                        </a>
+                        <a class="nav-item" href="aircharts.html">
+                            <img src="fan.svg" alt="Γραφήματα ποιότητας αέρα" title="Γραφήματα ποιότητας αέρα">
+                        </a>
+                        <a class="nav-item" href="about.html">
+                            <img src="info.svg" alt="Πληροφορίες" title="Σχετικά">
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Περιεχόμενο -->
+    <div class="container-fluid">
+
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h4 id="latest-temp">Τελευταία υγρασία: -- %</h4>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <select id="timeFilter" class="form-control w-35 mx-auto">
+                    <option value="all">Όλα τα δεδομένα</option>
+                    <option value="last24h">Τελευταίες 24 ώρες</option>
+                    <option value="last12h">Τελευταίες 12 ώρες</option>
+                    <option value="last6h">Τελευταίες 6 ώρες</option>
+                    <option value="last3h">Τελευταίες 3 ώρες</option>
+                    <option value="last1h">Τελευταία 1 ώρα</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <!-- λεπτό-λεπτό -->
+            <div class="col-12">
+                <div class="chart-container">
+                    <canvas id="minutoChart"></canvas>
+                </div>
+                <div class="chart-title">Υγρασία — Ανάλυση λεπτό-λεπτό</div>
+            </div>
+
+            <!-- ωριαία + CI -->
+            <div class="col-12 mt-4">
+                <div class="chart-container">
+                    <canvas id="oraChart"></canvas>
+                </div>
+                <div class="chart-title">Υγρασία — Ωριαία μέση τιμή και 95% Διάστημα Εμπιστοσύνης</div>
+
+                <!-- ΥΠΟΜΝΗΜΑ -->
+                <div class="chart-legend-wrapper">
+                    <div class="chart-legend-box">
+
+                        <div class="legend-item">
+                            <div class="legend-color legend-mean"></div>
+                            <span>Μέση ωριαία υγρασία</span>
+                        </div>
+
+                        <div class="legend-item">
+                            <div class="legend-color legend-ci-upper"></div>
+                            <span>Άνω όριο 95% CI</span>
+                        </div>
+
+                        <div class="legend-item">
+                            <div class="legend-color legend-ci-lower"></div>
+                            <span>Κάτω όριο 95% CI</span>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Footer placeholder -->
+    <div id="site-footer"></div>
+
+    <!-- 1) Φόρτωσε το κοινό footer -->
+    <script>
+        fetch('footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const el = document.getElementById('site-footer');
+                if (el) el.innerHTML = html;
+            })
+            .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+    </script>
+
+    <!-- 2) Μετά φόρτωσε το JS της σελίδας -->
+
+    <script src="appumidit.js"></script>
+</body>
+
+</html>

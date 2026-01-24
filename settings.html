@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="el">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#bcadaf">
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
+  <title>Ρυθμίσεις - Vannet</title>
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+  <style>
+    body {
+      background-color: rgb(238, 238, 237);
+      color: #241e1d;
+    }
+
+    /* Banner */
+    .banner {
+      background-color: rgb(188, 173, 175);
+      padding: 20px 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #dee2e6;
+      width: 100%;
+      color: #241e1d;
+    }
+
+    .banner-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* Navigation */
+    nav {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-item {
+      margin-left: 20px;
+      display: inline-block;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .nav-item img {
+      width: 24px;
+      height: 24px;
+      display: inline-block;
+      filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
+    }
+
+    @media (max-width: 576px) {
+      nav {
+        justify-content: center;
+      }
+
+      .nav-item {
+        margin-left: 10px;
+        margin-bottom: 10px;
+      }
+    }
+
+    /* Content */
+    .content {
+      margin: 20px;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    h2,
+    h3,
+    h4 {
+      color: rgb(110, 65, 69);
+      font-weight: bold;
+    }
+
+    h3 {
+      margin-top: 20px;
+    }
+
+    h4 {
+      margin-top: 15px;
+    }
+
+    .cardish {
+      padding: 12px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+      margin-bottom: 12px;
+    }
+
+    .muted-note {
+      font-size: 14px;
+      color: #555;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Banner -->
+  <div class="banner">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-6">
+          <div class="banner-title">Ρυθμίσεις</div>
+        </div>
+
+        <div class="col-6 text-right">
+          <nav>
+            <a class="nav-item" href="index.html">
+              <img src="speedometer.svg" alt="Home" title="Κεντρικός Πίνακας">
+            </a>
+            <a class="nav-item" href="charts.html">
+              <img src="thermometer.svg" alt="Temperature Charts" title="Γραφήματα Θερμοκρασίας">
+            </a>
+            <a class="nav-item" href="humcharts.html">
+              <img src="drop-half-bottom.svg" alt="Humidity Charts" title="Γραφήματα Υγρασίας">
+            </a>
+            <a class="nav-item" href="presscharts.html">
+              <img src="cloud-sun.svg" alt="Pressure Charts" title="Γραφήματα Πίεσης">
+            </a>
+            <a class="nav-item" href="aircharts.html">
+              <img src="fan.svg" alt="AIQ Charts" title="Γραφήματα Ποιότητας Αέρα">
+            </a>
+            <a class="nav-item" href="tank1.html">
+              <img src="tank_1.svg" alt="Δεξαμενή 1" title="Δεξαμενή 1">
+            </a>
+            <a class="nav-item" href="tank2.html">
+              <img src="tank_2.svg" alt="Δεξαμενή 2" title="Δεξαμενή 2">
+            </a>
+            <a class="nav-item" href="about.html">
+              <img src="info.svg" alt="Πληροφορίες" title="Σχετικά">
+            </a>
+            <!-- εδώ ΔΕΝ βάζουμε gear -->
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container-fluid">
+    <div class="content">
+
+      <h2>Επιλογές εμφάνισης</h2>
+      <p class="muted-note">Διάλεξε τι θα φαίνεται στον κεντρικό πίνακα (index).</p>
+
+      <div class="cardish">
+        <h4 style="margin:0 0 10px 0;">Κάρτες που θα εμφανίζονται στο Index</h4>
+
+        <label style="display:block; margin-bottom:8px;">
+          <input type="checkbox" id="showTemp"> Θερμοκρασία
+        </label>
+        <label style="display:block; margin-bottom:8px;">
+          <input type="checkbox" id="showHum"> Υγρασία
+        </label>
+        <label style="display:block; margin-bottom:8px;">
+          <input type="checkbox" id="showPress"> Πίεση
+        </label>
+        <label style="display:block; margin-bottom:8px;">
+          <input type="checkbox" id="showTanks"> Δεξαμενές (πάνω δεξιά κάρτα)
+        </label>
+        <label style="display:block; margin-bottom:8px;">
+          <input type="checkbox" id="showAiq"> Ποιότητα Αέρα (AIQ)
+        </label>
+        <label style="display:block; margin-bottom:8px;">
+          <input type="checkbox" id="showWeather"> Καιρός / Πρόβλεψη
+        </label>
+
+        <div class="muted-note">
+          Σημ.: Στο index σου οι δεξαμενές είναι μία κοινή κάρτα (με 2 mini δεξαμενές μέσα).
+        </div>
+      </div>
+
+      <h2 style="margin-top:24px;">Ειδοποιήσεις (Yellow / Red)</h2>
+      <p class="muted-note">
+        Διάλεξε για ποιες μετρήσεις θες ειδοποιήσεις και αν θα “χτυπάνε” στο κίτρινο (προσοχή)
+        και/ή στο κόκκινο (συναγερμός).
+      </p>
+
+      <div class="cardish">
+        <h4 style="margin:0 0 10px 0;">Θερμοκρασία</h4>
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_temp_enabled"> Ενεργό</label>
+
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Κάτω (&lt;)</label>
+            <input type="number" id="cfg_temp_min" class="form-control form-control-sm" placeholder="16">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Πάνω (&gt;)</label>
+            <input type="number" id="cfg_temp_max" class="form-control form-control-sm" placeholder="28">
+          </div>
+        </div>
+
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_temp_yellow"> Ειδοποίηση στο
+          κίτρινο</label>
+        <label style="display:block;"><input type="checkbox" id="al_temp_red"> Ειδοποίηση στο κόκκινο</label>
+      </div>
+
+      <div class="cardish">
+        <h4 style="margin:0 0 10px 0;">Υγρασία (%)</h4>
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_hum_enabled"> Ενεργό</label>
+
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Κάτω (&lt;%)</label>
+            <input type="number" id="cfg_hum_min" class="form-control form-control-sm" placeholder="30">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Πάνω (&gt;%)</label>
+            <input type="number" id="cfg_hum_max" class="form-control form-control-sm" placeholder="70">
+          </div>
+        </div>
+
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_hum_yellow"> Ειδοποίηση στο
+          κίτρινο</label>
+        <label style="display:block;"><input type="checkbox" id="al_hum_red"> Ειδοποίηση στο κόκκινο</label>
+      </div>
+
+      <div class="cardish">
+        <h4 style="margin:0 0 10px 0;">Πίεση</h4>
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_press_enabled"> Ενεργό</label>
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_press_yellow"> Ειδοποίηση στο
+          κίτρινο</label>
+        <label style="display:block;"><input type="checkbox" id="al_press_red"> Ειδοποίηση στο κόκκινο</label>
+      </div>
+
+      <div class="cardish">
+        <h4 style="margin:0 0 10px 0;">Ποιότητα Αέρα (AIQ)</h4>
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_aiq_enabled"> Ενεργό</label>
+        <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_aiq_yellow"> Ειδοποίηση στο
+          κίτρινο</label>
+        <label style="display:block;"><input type="checkbox" id="al_aiq_red"> Ειδοποίηση στο κόκκινο</label>
+      </div>
+
+      <div class="cardish">
+        <h4 style="margin:0 0 10px 0;">Δεξαμενές (κρίσιμα όρια)</h4>
+
+        <!-- Tank 1 -->
+        <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+          <h5 style="font-size:16px;">Δεξαμενή 1</h5>
+          <div style="display:flex; gap:10px; margin-bottom:6px;">
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Χωρητικότητα (lt)</label>
+              <input type="number" id="cfg_t1_cap" class="form-control form-control-sm" placeholder="3000">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Alert Κάτω (&lt;%)</label>
+              <input type="number" id="cfg_t1_min" class="form-control form-control-sm" placeholder="15">
+            </div>
+          </div>
+          <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_tank1_enabled"> Ενεργό
+            αλάρμ</label>
+          <label style="display:block; margin-bottom:4px;"><input type="checkbox" id="al_tank1_yellow"> Ειδοποίηση στο
+            κίτρινο</label>
+          <label style="display:block;"><input type="checkbox" id="al_tank1_red"> Ειδοποίηση στο κόκκινο</label>
+        </div>
+
+        <!-- Tank 2 -->
+        <div>
+          <h5 style="font-size:16px;">Δεξαμενή 2</h5>
+          <div style="display:flex; gap:10px; margin-bottom:6px;">
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Χωρητικότητα (lt)</label>
+              <input type="number" id="cfg_t2_cap" class="form-control form-control-sm" placeholder="500">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:12px; font-weight:bold;">Alert Κάτω (&lt;%)</label>
+              <input type="number" id="cfg_t2_min" class="form-control form-control-sm" placeholder="15">
+            </div>
+          </div>
+          <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_tank2_enabled"> Ενεργό
+            αλάρμ</label>
+          <label style="display:block; margin-bottom:4px;"><input type="checkbox" id="al_tank2_yellow"> Ειδοποίηση στο
+            κίτρινο</label>
+          <label style="display:block;"><input type="checkbox" id="al_tank2_red"> Ειδοποίηση στο κόκκινο</label>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary" id="saveAll">Αποθήκευση όλων</button>
+        <button class="btn btn-outline-secondary" id="resetAll" style="margin-left:8px;">Επαναφορά</button>
+        <span id="msg" style="margin-left:12px; color: rgb(110, 65, 69); font-weight:bold;"></span>
+      </div>
+
+      <script>
+        const SETTINGS_KEY = "vannet_settings_v1";
+
+        const defaults = {
+          cards: {
+            showTemp: true,
+            showHum: true,
+            showPress: true,
+            showTanks: true,
+            showAiq: true,
+            showWeather: true
+          },
+          alerts: {
+            temp: { enabled: true, yellow: true, red: true },
+            hum: { enabled: true, yellow: true, red: true },
+            press: { enabled: true, yellow: true, red: true },
+            aiq: { enabled: true, yellow: true, red: true },
+            tank1: { enabled: true, yellow: true, red: true },
+            tank2: { enabled: true, yellow: true, red: true }
+          },
+          // Νέο αντικείμενο limits για τα νούμερα
+          limits: {
+            temp: { min: 16, max: 28 },
+            hum: { min: 30, max: 70 },
+            tank1: { cap: 3000, minPct: 15 },
+            tank2: { cap: 500, minPct: 15 }
+          }
+        };
+
+        function loadSettings() {
+          try {
+            const raw = localStorage.getItem(SETTINGS_KEY);
+            if (!raw) return structuredClone(defaults);
+            const parsed = JSON.parse(raw);
+
+            return {
+              ...structuredClone(defaults),
+              ...parsed,
+              ...structuredClone(defaults),
+              ...parsed,
+              cards: { ...defaults.cards, ...(parsed.cards || {}) },
+              alerts: { ...defaults.alerts, ...(parsed.alerts || {}) },
+              limits: { ...defaults.limits, ...(parsed.limits || {}) }
+            };
+          } catch (e) {
+            return structuredClone(defaults);
+          }
+        }
+
+        function saveSettings(s) {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+        }
+
+        function applyToUI(s) {
+          // cards
+          document.getElementById("showTemp").checked = !!s.cards.showTemp;
+          document.getElementById("showHum").checked = !!s.cards.showHum;
+          document.getElementById("showPress").checked = !!s.cards.showPress;
+          document.getElementById("showTanks").checked = !!s.cards.showTanks;
+          document.getElementById("showAiq").checked = !!s.cards.showAiq;
+          document.getElementById("showWeather").checked = !!s.cards.showWeather;
+
+          // alerts temp
+          document.getElementById("al_temp_enabled").checked = !!s.alerts.temp.enabled;
+          document.getElementById("al_temp_yellow").checked = !!s.alerts.temp.yellow;
+          document.getElementById("al_temp_red").checked = !!s.alerts.temp.red;
+
+          // alerts hum
+          document.getElementById("al_hum_enabled").checked = !!s.alerts.hum.enabled;
+          document.getElementById("al_hum_yellow").checked = !!s.alerts.hum.yellow;
+          document.getElementById("al_hum_red").checked = !!s.alerts.hum.red;
+
+          // alerts press
+          document.getElementById("al_press_enabled").checked = !!s.alerts.press.enabled;
+          document.getElementById("al_press_yellow").checked = !!s.alerts.press.yellow;
+          document.getElementById("al_press_red").checked = !!s.alerts.press.red;
+
+          // alerts aiq
+          document.getElementById("al_aiq_enabled").checked = !!s.alerts.aiq.enabled;
+          document.getElementById("al_aiq_yellow").checked = !!s.alerts.aiq.yellow;
+          document.getElementById("al_aiq_red").checked = !!s.alerts.aiq.red;
+
+          // alerts tank1/2
+          document.getElementById("al_tank1_enabled").checked = !!s.alerts.tank1.enabled;
+          document.getElementById("al_tank1_yellow").checked = !!s.alerts.tank1.yellow;
+          document.getElementById("al_tank1_red").checked = !!s.alerts.tank1.red;
+
+          document.getElementById("al_tank2_enabled").checked = !!s.alerts.tank2.enabled;
+          document.getElementById("al_tank2_yellow").checked = !!s.alerts.tank2.yellow;
+          document.getElementById("al_tank2_red").checked = !!s.alerts.tank2.red;
+
+          // limits inputs
+          document.getElementById("cfg_temp_min").value = s.limits?.temp?.min ?? 16;
+          document.getElementById("cfg_temp_max").value = s.limits?.temp?.max ?? 28;
+
+          document.getElementById("cfg_hum_min").value = s.limits?.hum?.min ?? 30;
+          document.getElementById("cfg_hum_max").value = s.limits?.hum?.max ?? 70;
+
+          document.getElementById("cfg_t1_cap").value = s.limits?.tank1?.cap ?? 3000;
+          document.getElementById("cfg_t1_min").value = s.limits?.tank1?.minPct ?? 15;
+
+          document.getElementById("cfg_t2_cap").value = s.limits?.tank2?.cap ?? 500;
+          document.getElementById("cfg_t2_min").value = s.limits?.tank2?.minPct ?? 15;
+        }
+
+        function readFromUI() {
+          return {
+            cards: {
+              showTemp: document.getElementById("showTemp").checked,
+              showHum: document.getElementById("showHum").checked,
+              showPress: document.getElementById("showPress").checked,
+              showTanks: document.getElementById("showTanks").checked,
+              showAiq: document.getElementById("showAiq").checked,
+              showWeather: document.getElementById("showWeather").checked
+            },
+            alerts: {
+              temp: {
+                enabled: document.getElementById("al_temp_enabled").checked,
+                yellow: document.getElementById("al_temp_yellow").checked,
+                red: document.getElementById("al_temp_red").checked
+              },
+              hum: {
+                enabled: document.getElementById("al_hum_enabled").checked,
+                yellow: document.getElementById("al_hum_yellow").checked,
+                red: document.getElementById("al_hum_red").checked
+              },
+              press: {
+                enabled: document.getElementById("al_press_enabled").checked,
+                yellow: document.getElementById("al_press_yellow").checked,
+                red: document.getElementById("al_press_red").checked
+              },
+              aiq: {
+                enabled: document.getElementById("al_aiq_enabled").checked,
+                yellow: document.getElementById("al_aiq_yellow").checked,
+                red: document.getElementById("al_aiq_red").checked
+              },
+              tank1: {
+                enabled: document.getElementById("al_tank1_enabled").checked,
+                yellow: document.getElementById("al_tank1_yellow").checked,
+                red: document.getElementById("al_tank1_red").checked
+              },
+              tank2: {
+                enabled: document.getElementById("al_tank2_enabled").checked,
+                yellow: document.getElementById("al_tank2_yellow").checked,
+                red: document.getElementById("al_tank2_red").checked
+              }
+            },
+            limits: {
+              temp: {
+                min: Number(document.getElementById("cfg_temp_min").value),
+                max: Number(document.getElementById("cfg_temp_max").value)
+              },
+              hum: {
+                min: Number(document.getElementById("cfg_hum_min").value),
+                max: Number(document.getElementById("cfg_hum_max").value)
+              },
+              tank1: {
+                cap: Number(document.getElementById("cfg_t1_cap").value),
+                minPct: Number(document.getElementById("cfg_t1_min").value)
+              },
+              tank2: {
+                cap: Number(document.getElementById("cfg_t2_cap").value),
+                minPct: Number(document.getElementById("cfg_t2_min").value)
+              }
+            }
+          };
+        }
+
+        function flash(text) {
+          const el = document.getElementById("msg");
+          el.textContent = text;
+          setTimeout(() => el.textContent = "", 1400);
+        }
+
+        // init
+        applyToUI(loadSettings());
+
+        document.getElementById("saveAll").addEventListener("click", () => {
+          saveSettings(readFromUI());
+          flash("Αποθηκεύτηκε!");
+        });
+
+        document.getElementById("resetAll").addEventListener("click", () => {
+          saveSettings(structuredClone(defaults));
+          applyToUI(structuredClone(defaults));
+          flash("Επαναφορά!");
+        });
+      </script>
+
+    </div>
+  </div>
+
+  <!-- Footer placeholder (έξω από το content) -->
+  <div id="site-footer"></div>
+  <script>
+    fetch('footer.html')
+      .then(r => r.text())
+      .then(html => {
+        const el = document.getElementById('site-footer');
+        if (el) el.innerHTML = html;
+      })
+      .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+  </script>
+</body>
+
+</html>

@@ -1,20 +1,58 @@
-# ESP32 Sensor Dashboard
+# Vannet – Uno R4 WiFi & BME680 IoT Dashboard
 
-This repository contains the Arduino code and web components for a project that integrates an ESP32 microcontroller with Bosch sensors to measure humidity, temperature, and Indoor Air Quality (IAQ). The system captures real-time sensor data and visualizes it through an interactive web dashboard. The project demonstrates a full-stack IoT solution, including data collection, cloud integration, and web-based presentation.
-How It Works
-Data Collection
+Αυτό το αποθετήριο περιέχει τον κώδικα του Arduino και τα web components για ένα project που συνδέει την πλακέτα **Uno R4 WiFi** με τον αισθητήρα **Bosch/Pimoroni BME680**.  
+Το σύστημα μετρά υγρασία, θερμοκρασία και IAQ (Indoor Air Quality) και τα εμφανίζει σε πραγματικό χρόνο μέσα από έναν διαδραστικό web πίνακα ελέγχου.
 
-# The ESP32 microcontroller reads data from Bosch sensors.
-Supported measurements include:
-   - Humidity
-   - Temperature
-   - IAQ (Indoor Air Quality Index)
+Το project αποτελεί μια ολοκληρωμένη IoT λύση:
+- Συλλογή δεδομένων
+- Αποστολή στο cloud μέσω Google Apps Script
+- Web οπτικοποίηση σε GitHub Pages
 
-# Data Transmission
+---
 
-The ESP32 sends the sensor data to a Google Apps Script Web App endpoint.
-The web app processes the incoming data and appends it to a Google Sheet, effectively creating a real-time database.
+## 🔧 Πώς λειτουργεί
 
-# Data Visualization
+### 1️⃣ Συλλογή Δεδομένων – Data Collection
 
-The data from the Google Sheet is fetched and displayed on a custom web dashboard, providing a user-friendly interface for monitoring the collected data in real-time. The dashboard is hosted on GitHub Pages and is freely accessible at: https://garaugarau.github.io/TempData/
+Η πλακέτα **Uno R4** διαβάζει δεδομένα από τον αισθητήρα **BME680**.
+
+Οι μετρήσεις που υποστηρίζονται είναι:
+- 🌡️ Θερμοκρασία  
+- 💧 Υγρασία  
+- 🏠 IAQ (Δείκτης Ποιότητας Αέρα Εσωτερικού Χώρου)
+
+---
+
+### 2️⃣ Αποστολή Δεδομένων – Data Transmission
+
+- Το Uno R4 στέλνει τις μετρήσεις σε ένα **Google Apps Script Web App endpoint**.  
+- Το script καταχωρεί τα δεδομένα σε **Google Sheet**, λειτουργώντας ως βάση δεδομένων σε πραγματικό χρόνο.
+
+---
+
+### 3️⃣ Οπτικοποίηση – Data Visualization
+
+Τα δεδομένα από το Google Sheet φορτώνονται και εμφανίζονται σε έναν **διαδραστικό web πίνακα ελέγχου**.
+
+Ο πίνακας:
+- δείχνει τις μετρήσεις σε πραγματικό χρόνο  
+- ενημερώνεται αυτόματα  
+- είναι εύκολος στη χρήση και προσβάσιμος από οπουδήποτε  
+
+📍 **Live Dashboard:**  
+https://spiros1979.github.io/Vannet/
+
+---
+
+## 📁 Περιεχόμενα του Repository
+
+- `arduino/` → Κώδικας για Uno R4 WiFi  
+- `web/` → Web dashboard (HTML, JS, CSS)  
+- `gas/` → Google Apps Script endpoint  
+
+---
+
+## 📬 Επικοινωνία
+Για απορίες ή βελτιώσεις, αρκεί ένα issue στο GitHub.
+
+

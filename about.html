@@ -1,129 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - Temperature Dashboard</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#bcadaf">
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
+    <title>About - Vannet</title>
+
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body {
-            background-color: rgb(238, 238, 237); /* Site background color */
-            color: #241e1d; /* Main text color */
+            background-color: rgb(238, 238, 237);
+            color: #241e1d;
         }
+
+        /* Banner */
         .banner {
-            background-color: rgb(188, 173, 175); /* Main banner color */
-            padding: 20px 10px; /* Increased vertical padding for a taller banner */
+            background-color: rgb(188, 173, 175);
+            padding: 20px 10px;
             margin-bottom: 20px;
             border-bottom: 2px solid #dee2e6;
             width: 100%;
-            color: #241e1d; /* Text color in the banner */
+            color: #241e1d;
         }
+
         .banner-title {
             font-size: 24px;
             font-weight: bold;
         }
-        .banner-date {
-            font-size: 14px;
-            color: #241e1d; /* Date color in the banner */
+
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            flex-wrap: wrap;
         }
+
         .nav-item {
             margin-left: 20px;
-            display: inline-block; /* Prevents additional spacing */
+            display: inline-block;
             vertical-align: middle;
+            text-align: center;
         }
+
         .nav-item img {
             width: 24px;
             height: 24px;
             display: inline-block;
             filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-            /* Applies color to icons (via filter) */
         }
-        nav {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
+
+        @media (max-width: 576px) {
+            nav {
+                justify-content: center;
+            }
+
+            .nav-item {
+                margin-left: 10px;
+                margin-bottom: 10px;
+            }
         }
+
+        /* Content */
         .content {
             margin: 20px;
             font-size: 18px;
             line-height: 1.6;
         }
-        h2 {
-            color: rgb(110, 65, 69); /* Banner color */
-            font-weight: bold; /* Bold for section titles */
-        }
-        h3 {
-            color: rgb(110, 65, 69); /* Banner color for subsections */
+
+        h2,
+        h3,
+        h4 {
+            color: rgb(110, 65, 69);
             font-weight: bold;
+        }
+
+        h3 {
             margin-top: 20px;
         }
-        a {
-            color: rgb(110, 65, 69); /* Banner color for hyperlinks */
-            font-weight: bold; /* Bold for hyperlinks */
+
+        h4 {
+            margin-top: 15px;
+        }
+
+        .content a {
+            color: rgb(110, 65, 69);
+            font-weight: bold;
             text-decoration: none;
         }
-        a:hover {
+
+        .content a:hover {
             text-decoration: underline;
         }
+
+
         ul {
             list-style-type: disc;
             margin-left: 20px;
         }
+
         figure {
-            text-align: center; /* Centers images */
-            margin: 20px auto; /* Space around the figure */
-        }
-        figure img {
-            max-width: 50%; /* Image size reduced relative to page width */
-            height: auto; /* Maintains image aspect ratio */
-        }
-        figcaption {
-            color: rgb(110, 65, 69); /* Banner color for captions */
-        }
-        footer {
-            margin-top: 50px;
-            padding: 10px 0;
             text-align: center;
-            font-size: 12px;
-            color: #241e1d; /* Footer text color */
+            margin: 20px auto;
         }
-        footer img {
-            margin-left: 10px;
-            margin-right: 10px;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            filter: invert(18%) sepia(6%) saturate(9%) hue-rotate(356deg) brightness(94%) contrast(94%);
-            /* Applies color to footer icons */
+
+        figure img {
+            max-width: 50%;
+            height: auto;
+        }
+
+        figcaption {
+            color: rgb(110, 65, 69);
         }
     </style>
 </head>
+
 <body>
     <!-- Banner -->
     <div class="banner">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-6">
-                    <div class="banner-title">About This Site</div>
+                    <div class="banner-title">Σχετικά με αυτό το site</div>
                 </div>
+
                 <div class="col-6 text-right">
                     <nav>
                         <a class="nav-item" href="index.html">
-                            <img src="speedometer.svg" alt="Home" title="Dashboard">
+                            <img src="speedometer.svg" alt="Home" title="Κεντρικός Πίνακας">
                         </a>
+
                         <a class="nav-item" href="charts.html">
-                            <img src="thermometer.svg" alt="Charts" title="Temperature Charts">
+                            <img src="thermometer.svg" alt="Temperature Charts" title="Γραφήματα Θερμοκρασίας">
                         </a>
+
                         <a class="nav-item" href="humcharts.html">
-                            <img src="drop-half-bottom.svg" alt="Humidity Charts" title="Humidity Charts">
+                            <img src="drop-half-bottom.svg" alt="Humidity Charts" title="Γραφήματα Υγρασίας">
                         </a>
+
                         <a class="nav-item" href="presscharts.html">
-                            <img src="cloud-sun.svg" alt="Pressure Charts" title="Pressure Charts">
+                            <img src="cloud-sun.svg" alt="Pressure Charts" title="Γραφήματα Πίεσης">
                         </a>
-                        <a class="nav-item" href="about.html">
-                            <img src="info.svg" alt="About This Site">
+
+                        <a class="nav-item" href="aircharts.html">
+                            <img src="fan.svg" alt="AIQ Charts" title="Γραφήματα Ποιότητας Αέρα">
+                        </a>
+
+                        <a class="nav-item" href="tank1.html">
+                            <img src="tank_1.svg" alt="Δεξαμενή 1" title="Δεξαμενή 1">
+                        </a>
+
+                        <a class="nav-item" href="tank2.html">
+                            <img src="tank_2.svg" alt="Δεξαμενή 2" title="Δεξαμενή 2">
+                        </a>
+
+                        <a class="nav-item" href="settings.html">
+                            <img src="gear.svg" alt="Ρυθμίσεις" title="Ρυθμίσεις">
+                        </a>
+
+
+                        <!--<a class="nav-item" href="about.html">
+                            <img src="info.svg" alt="About" title="Σχετικά με τη σελίδα">-->
                         </a>
                     </nav>
                 </div>
@@ -131,108 +172,122 @@
         </div>
     </div>
 
+    <!-- Content -->
     <div class="container-fluid">
         <div class="content">
             <p>
-                This side project was developed entirely using ChatGPT, along with basic knowledge of electronics, C programming, and front-end development.
-				The current site is a dashboard hosted on GitHub that displays the internal environmental parameters of my apartment.
-				All measurements are taken using an ESP32 board and a Bosch BME680 sensor. Data is recorded every minute and sent to a spreadsheet, where it is summarized in real time in other sections of this site.
+                Η σελίδα που βλέπεις είναι μέρος του project <strong>Vannet</strong> και υλοποιείται με το repo
+                <a href="https://github.com/spiros1979/Vannet.git" target="_blank"
+                    rel="noopener">https://github.com/spiros1979/Vannet.git</a>
+                και το GitHub Pages.
+                Αποτελεί fork του
+                <a href="https://github.com/GarauGarau/TempData" target="_blank"
+                    rel="noopener">https://github.com/GarauGarau/TempData</a>.
+                Η ιδέα είναι σχετικά απλή: να έχουμε μια καθαρή εικόνα για τις κλιματολογικές συνθήκες μιας περιοχής
+                (θερμοκρασία, υγρασία, πίεση, ποιότητα αέρα), μετεωρολογική πρόβλεψη, καθώς και δεδομένα από δεξαμενές
+                (στάθμη) και κατανάλωση νερού σε σπίτι ή χωράφι.
+                Η εφαρμογή ενημερώνει άμεσα τον χρήστη μέσα από ένα web dashboard, χρησιμοποιώντας βασικά εργαλεία:
+                <strong>HTML, CSS, JavaScript</strong> και <strong>Chart.js</strong>.
             </p>
 
-            <h3>BME680 Sensor Overview</h3>
             <p>
-                The <a href="https://cdn-shop.adafruit.com/product-files/3660/BME680.pdf" target="_blank">BME680</a> is an all-in-one sensor that integrates multiple sensing capabilities into a single compact package. Specifically, it includes a small Metal-Oxide (MOX) sensor. The heated metal oxide modifies its resistance based on the presence of Volatile Organic Compounds (VOCs) in the air, allowing it to detect gases and alcohols such as ethanol, methanol, and carbon monoxide. This feature makes the BME680 ideal for monitoring air quality.
+                Στο “παρασκήνιο” τρέχει ένα <strong>Arduino UNO R4 WiFi</strong> σε συνδυασμό με έναν
+                <strong>Pimoroni BME680</strong> αισθητήρα. Το UNO R4 διαβάζει τις τιμές από τον αισθητήρα και
+                τις στέλνει περιοδικά, ενώ η εφαρμογή που φτιάξαμε σε JavaScript και HTML αναλαμβάνει να τις
+                εμφανίσει με έναν τρόπο που να είναι εύκολο να διαβαστεί, ακόμη και από κάποιον που απλά θέλει
+                να δει «τι καιρό κάνει». Ωστόσο, ο απώτερος σκοπός είναι το σύστημα να κάνει πολύ περισσότερα πράγματα.
             </p>
+
+            <h2>Hardware – UNO R4 WiFi &amp; Pimoroni BME680</h2>
+
+            <h3>Arduino UNO R4 WiFi</h3>
             <p>
-                The BME680 offers users the ability to individually adjust the sampling rates for each sensor component—temperature, humidity, pressure, and gas. Additionally, users can set the inter-measurement delay and the IIR filter sampling coefficient. This combination of settings provides precise control over measurement timing and accuracy, as well as effective energy management.
-				
-			<figure id="image1">
-                <img src="sensor.jpg" alt="Package dimensions">
-                <figcaption>Figura 2: Package dimensions</figcaption>
+                Το <strong>UNO R4 WiFi</strong> είναι η βασική πλακέτα του συστήματος. Κρατάει το κλασικό
+                form factor του Arduino UNO, αλλά προσθέτει:
+            </p>
+            <ul>
+                <li>Πιο ισχυρό μικροελεγκτή 32-bit για άνετο χειρισμό των μετρήσεων.</li>
+                <li>Ενσωματωμένο WiFi, ώστε να μπορεί να στέλνει τα δεδομένα χωρίς πρόσθετα modules.</li>
+                <li>Συμβατότητα με I²C, που κάνει εύκολη τη σύνδεση με breakout αισθητήρων όπως ο BME680.</li>
+            </ul>
+
+            <h3>Pimoroni BME680</h3>
+            <p>
+                Το <strong>Pimoroni BME680</strong> είναι ένα μικρό breakout που βασίζεται στον αισθητήρα
+                <strong>Bosch BME680</strong> και μπορεί να μετρήσει:
+            </p>
+            <ul>
+                <li>Θερμοκρασία</li>
+                <li>Σχετική υγρασία</li>
+                <li>Βαρομετρική πίεση</li>
+                <li>Gas / VOC (δείκτης ποιότητας αέρα)</li>
+            </ul>
+            <p>
+                Η επικοινωνία με την UNO R4 γίνεται μέσω <strong>I²C</strong>, άρα στην πράξη
+                χρειάζονται μόνο γραμμές για SDA, SCL, τροφοδοσία και γείωση. Ο αισθητήρας λειτουργεί σε
+                εύρος τιμών ιδανικό τόσο για εσωτερικό όσο και για εξωτερικό χώρο.
+            </p>
+
+            <figure id="image1">
+                <img src="sensor.jpg" alt="BME680 pinout">
+                <figcaption>Εικόνα 1: BME680 pinout – ο αισθητήρας που «βλέπει» το περιβάλλον.</figcaption>
             </figure>
-			
-            </p>
 
-            <h3>Sensor Capabilities</h3>
-
-            <h4>Temperature Detection</h4>
+            <h4>Πρακτικές λεπτομέρειες</h4>
             <ul>
-                <li><strong>Range:</strong> -40°C to +85°C</li>
-                <li><strong>Precision:</strong> ±0.5°C (within 0°C to +65°C)</li>
-                <li><strong>Resolution:</strong> 0.01°C</li>
-                <li><strong>Note:</strong> The onboard temperature sensor is attached to the PCB and experiences slight self-heating, typically resulting in temperature readings that are slightly higher than the ambient environment.</li>
+                <li>Οι μετρήσεις γίνονται περιοδικά (π.χ. ανά δίλεπτο) ώστε να έχουμε ομαλές καμπύλες στα γραφήματα.
+                </li>
+                <li>Ο BME680 χρειάζεται λίγο χρόνο στην αρχή για να σταθεροποιηθούν οι τιμές gas.</li>
+                <li>Επειδή ο αισθητήρας είναι πάνω σε πλακέτα, η θερμοκρασία μπορεί να διαβάζεται 1–2 βαθμούς πιο πάνω.
+                </li>
+                <li>Ο δείκτης IAQ είναι προς το παρόν περισσότερο ενδεικτικός· μελλοντικά θα χρησιμοποιηθεί πιο
+                    αξιόπιστη εκτίμηση.</li>
             </ul>
 
-            <h4>Humidity Detection</h4>
+            <h2>Frontend – Η web εφαρμογή</h2>
+            <p>
+                Η εφαρμογή που «πατάει» πάνω στα δεδομένα είναι φτιαγμένη με <strong>απλό HTML και JavaScript</strong>:
+            </p>
             <ul>
-                <li><strong>Range:</strong> 0% to 100% Relative Humidity (non-condensing)</li>
-                <li><strong>Precision:</strong> ±3%</li>
-                <li><strong>Resolution:</strong> 0.008%</li>
+                <li><strong>HTML + Bootstrap</strong> για τη βασική δομή και το layout των σελίδων.</li>
+                <li><strong>JavaScript</strong> για να φορτώνει τα δεδομένα, να τα επεξεργάζεται και να ενημερώνει τα
+                    γραφήματα.</li>
+                <li><strong>Chart.js</strong> για τη δημιουργία των γραφημάτων θερμοκρασίας, υγρασίας και πίεσης.</li>
             </ul>
 
-            <h4>Pressure Detection</h4>
-            <ul>
-                <li><strong>Operating Temperature:</strong> -40°C to +85°C (optimal precision between 0°C and +65°C)</li>
-                <li><strong>Range:</strong> 300 hPa to 1100 hPa</li>
-                <li><strong>Precision:</strong> ±1.0 hPa</li>
-                <li><strong>Resolution:</strong> 0.2 Pa</li>
-            </ul>
-
-            <h4>Gas Detection</h4>
-            <p>
-                The gas sensor operates by internally heating a small surface and measuring the resistance of the gas layer. This resistance indicates the concentration of VOCs in the air, providing an indirect measure of air quality. It’s important to note that while the sensor provides a resistance value relative to the overall VOC content, it cannot differentiate between specific gases or alcohols.
-            </p>
-
-            <h2>Backend Architecture</h2>
-            <p>
-                The backend of this project employs a straightforward and <strong>"naive"</strong> solution that achieves the desired functionality with minimal effort and investment.
-            </p>
-
-            <h3>Data Transmission</h3>
-            <p>
-                The ESP32 microcontroller collects sensor data from the BME680 and sends it to a <a href="https://docs.google.com/spreadsheets/d/1Uz_UY8qTs3DPF6qPaeZ6OCMvKPDMCwT7Gqzmrs_sll0/edit?usp=sharing" target="_blank">Google Spreadsheet</a>. This is accomplished using a <strong>Google App Script</strong>, which serves as an intermediary to receive HTTP requests from the ESP32 and append the data to the spreadsheet.
-            </p>
-
-            <h3>Data Storage</h3>
-            <p>
-                Sensor readings are stored in a <strong>Google Spreadsheet</strong> each minute, providing an accessible and easily manageable repository for the collected data. This method eliminates the need for setting up and maintaining a dedicated database.
-            </p>
-
-            <h3>Data Retrieval and Processing</h3>
-            <p>
-                A <strong>JavaScript</strong> script reads the data from the Google Spreadsheet. This script organizes the data, making it ready for visualization on the dashboard.
-            </p>
-
-            <h3>Frontend Dashboard</h3>
-            <ul>
-                <li><strong>Summary Screen:</strong> Displays the most recent measurements from the last five minutes, allowing for quick and easy monitoring of current environmental conditions.</li>
-                <li><strong>Dedicated Pages:</strong> Each sensor metric (e.g., temperature, humidity, pressure, air quality) has its own dedicated page where users can view the complete historical data, enabling detailed analysis and trend tracking over time.</li>
-            </ul>
-
-            <h2>Arduino Integration</h2>
-            <p>
-                The Arduino code, freely accessible in the <a href="https://github.com/GarauGarau/TempData/blob/main/besc_script/besc_script.ino" target="_blank">GitHub repository</a>, integrates the use of the <strong>BSEC (Bosch Software Environmental Cluster)</strong> libraries. These libraries allow for calibrated readings from Bosch, providing offsets for temperature and humidity measurements. Additionally, the code processes gas sensor values to generate a final <strong>Indoor Air Quality (IAQ)</strong> value, offering a comprehensive overview of the environmental conditions within the apartment.
-				
-			<figure id="image2">
-                <img src="esp32sensor.jpg" alt="Circuit">
-                <figcaption>Figure 2: Circuit</figcaption>
+            <figure id="image2">
+                <img src="Vannet_Wiring.png" alt="Συνδεσμολογία UNO R4 Wifi με BME680">
+                <figcaption>Εικόνα 2: Ενδεικτική συνδεσμολογία μεταξύ UNO R4 WiFi και Pimoroni BME680.</figcaption>
             </figure>
-				
-            </p>
-        </div>
 
-        <footer>
-            <p>About me</p>
-            <a href="https://github.com/GarauGarau" target="_blank">
-                <img src="github-logo.svg" alt="GitHub Logo">
-            </a>
-            <a href="https://x.com/alessiogarau22" target="_blank">
-                <img src="x-logo.svg" alt="X (Twitter) Logo">
-            </a>
-            <a href="https://alessiogarau.io" target="_blank">
-                <img src="user.svg" alt="Personal Website">
-            </a>
-        </footer>
-    </div>
+            <h2>Γιατί έτσι</h2>
+            <p>
+                Ο στόχος δεν είναι να φτιάξουμε κάτι περίπλοκο, αλλά κάτι που αργότερα θα αποτελέσει μέρος ενός
+                μεγαλύτερου app
+                που θα προσφέρει διάδραση με τον χρήστη και θα συνδέει:
+            </p>
+            <ul>
+                <li>Πραγματικές μετρήσεις από Arduino και αισθητήρα.</li>
+                <li>Μια απλή web διεπαφή με HTML, CSS και JavaScript.</li>
+                <li>Γραφική απεικόνιση με Chart.js, ώστε το σπίτι/χωράφι να αποκτήσει ένα μικρό «ψηφιακό δίδυμο».</li>
+            </ul>
+
+            <p>Έτσι μπορούμε σχετικά απλά να έχουμε ένα πρακτικό παράδειγμα συνδυασμού hardware και web τεχνολογιών.</p>
+        </div> <!-- /.content -->
+    </div> <!-- /.container-fluid -->
+
+    <!-- Footer placeholder (έξω από το content) -->
+    <div id="site-footer"></div>
+
+    <script>
+        fetch('footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const el = document.getElementById('site-footer');
+                if (el) el.innerHTML = html;
+            })
+            .catch(err => console.error('Σφάλμα φόρτωσης footer:', err));
+    </script>
 </body>
+
 </html>
