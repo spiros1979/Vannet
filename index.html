@@ -344,7 +344,7 @@
     <div class="row mb-3">
       <div class="col-md-3 d-flex">
         <a href="charts.html" class="counter counter-top w-100" title="Προβολή γραφημάτων θερμοκρασίας">
-          <h3>Θερμοκρασία</h3>
+          <h3 id="temp-title">Θερμοκρασία</h3>
           <canvas id="temperatureChart"></canvas>
           <p id="temperature">--°C</p>
           <div class="counter-details">
@@ -357,7 +357,7 @@
 
       <div class="col-md-3 d-flex">
         <a href="humcharts.html" class="counter counter-top w-100" title="Προβολή γραφημάτων υγρασίας">
-          <h3>Υγρασία</h3>
+          <h3 id="hum-title">Υγρασία</h3>
           <canvas id="humidityChart"></canvas>
           <p id="humidity">--%</p>
           <div class="counter-details">
@@ -370,7 +370,7 @@
 
       <div class="col-md-3 d-flex">
         <a href="presscharts.html" class="counter counter-top w-100" title="Προβολή γραφημάτων πίεσης">
-          <h3>Πίεση</h3>
+          <h3 id="press-title">Πίεση</h3>
           <canvas id="pressureChart"></canvas>
           <p id="pressure">-- hPa</p>
           <div class="counter-details">
@@ -387,7 +387,7 @@
 
           <div class="tank-mini-wrap">
             <a class="tank-mini" href="tank1.html" title="Άνοιγμα σελίδας Δεξαμενής 1">
-              <div class="tank-mini-title">Δεξαμενή 1</div>
+              <div class="tank-mini-title" id="tank1-title">Δεξαμενή 1</div>
               <div class="tank-shape">
                 <div id="tank1-water" class="tank-water"></div>
                 <div id="tank1-value" class="tank-value">-- lt</div>
@@ -399,7 +399,7 @@
             </a>
 
             <a class="tank-mini" href="tank2.html" title="Άνοιγμα σελίδας Δεξαμενής 2">
-              <div class="tank-mini-title">Δεξαμενή 2</div>
+              <div class="tank-mini-title" id="tank2-title">Δεξαμενή 2</div>
               <div class="tank-shape">
                 <div id="tank2-water" class="tank-water"></div>
                 <div id="tank2-value" class="tank-value">-- lt</div>
@@ -419,7 +419,7 @@
     <div class="row mb-4">
       <div class="col-md-4 d-flex">
         <a href="aircharts.html" class="counter w-100" title="Προβολή γραφημάτων ποιότητας αέρα">
-          <h3>Ποιότητα Αέρα (AIQ)</h3>
+          <h3 id="aiq-title">Ποιότητα Αέρα (AIQ)</h3>
           <div id="iaqBar" class="iaq-bar">
             <div id="iaqIndicator" class="iaq-indicator"></div>
           </div>
@@ -950,32 +950,55 @@
     function runAlertsFromLatestValues(latest) {
       const settings = getSettings();
 
+      // Helper function to apply color to UI elements
+      const applyColor = (titleId, valueId, level) => {
+        const titleEl = document.getElementById(titleId);
+        const valueEl = document.getElementById(valueId);
+
+        let color = "inherit"; // default (e.g. black/#241e1d)
+        if (level === "yellow") color = "#d39e00"; // Bootstrap warning color approx
+        if (level === "red") color = "#dc3545";    // Bootstrap danger color approx
+
+        if (titleEl) titleEl.style.color = color;
+        if (valueEl) valueEl.style.color = color;
+      };
+
       // TEMP
       const tLev = levelTemp(latest.temp);
+      applyColor("temp-title", "temperature", tLev);
       if (tLev === "yellow") processAlert("temp", "yellow", `Θερμοκρασία: προσοχή (${latest.temp.toFixed(1)}°C)`, settings);
       if (tLev === "red") processAlert("temp", "red", `Θερμοκρασία: συναγερμός (${latest.temp.toFixed(1)}°C)`, settings);
 
       // HUM
       const hLev = levelHum(latest.hum);
+      applyColor("hum-title", "humidity", hLev);
       if (hLev === "yellow") processAlert("hum", "yellow", `Υγρασία: προσοχή (${latest.hum.toFixed(1)}%)`, settings);
       if (hLev === "red") processAlert("hum", "red", `Υγρασία: συναγερμός (${latest.hum.toFixed(1)}%)`, settings);
 
       // PRESS
       const pLev = levelPress(latest.press);
+      applyColor("press-title", "pressure", pLev);
       if (pLev === "yellow") processAlert("press", "yellow", `Πίεση: προσοχή (${latest.press.toFixed(1)} hPa)`, settings);
       if (pLev === "red") processAlert("press", "red", `Πίεση: συναγερμός (${latest.press.toFixed(1)} hPa)`, settings);
 
       // AIQ
       const aLev = levelAIQ(latest.aiq);
+      applyColor("aiq-title", "iaqValue", aLev);
+      // Also color the quality text? Optional, but consistent.
+      const qualEl = document.getElementById("iaqQuality");
+      if (qualEl) qualEl.style.color = (aLev === "yellow" ? "#d39e00" : (aLev === "red" ? "#dc3545" : "inherit"));
+
       if (aLev === "yellow") processAlert("aiq", "yellow", `AIQ: μέτρια ποιότητα αέρα (${latest.aiq.toFixed(0)})`, settings);
       if (aLev === "red") processAlert("aiq", "red", `AIQ: κακή ποιότητα αέρα (${latest.aiq.toFixed(0)})`, settings);
 
-      // TANK1/2 (με βάση ποσοστό)
+      // TANK1/2
       const t1Lev = levelTankPct(latest.tank1Pct);
+      applyColor("tank1-title", "tank1-value", t1Lev);
       if (t1Lev === "yellow") processAlert("tank1", "yellow", `Δεξαμενή 1: χαμηλά (${latest.tank1Pct}%)`, settings);
       if (t1Lev === "red") processAlert("tank1", "red", `Δεξαμενή 1: πολύ χαμηλά (${latest.tank1Pct}%)`, settings);
 
       const t2Lev = levelTankPct(latest.tank2Pct);
+      applyColor("tank2-title", "tank2-value", t2Lev);
       if (t2Lev === "yellow") processAlert("tank2", "yellow", `Δεξαμενή 2: χαμηλά (${latest.tank2Pct}%)`, settings);
       if (t2Lev === "red") processAlert("tank2", "red", `Δεξαμενή 2: πολύ χαμηλά (${latest.tank2Pct}%)`, settings);
     }
