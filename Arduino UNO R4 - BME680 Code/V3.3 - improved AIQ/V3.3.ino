@@ -1,5 +1,5 @@
 // V3.3 με βελτιωμένο υπολογισμό AIQ (Gas + Humidity compensation)
-// Βασισμένο στο V3.2
+// Βασισμένο στο V3.2.ino 
 
 #include <Wire.h>
 #include <WiFiS3.h>
@@ -16,10 +16,14 @@ const char* password = "2109347761";
 const char* scriptHost = "script.google.com";
 String scriptPath = "/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec";
 
-// ---- AIQ Όρια (Gas resistance) ----
+// ---- AIQ Όρια (0–100) ----
 // ΣΗΜΕΙΩΣΗ: Στο BME680, ΥΨΗΛΗ αντίσταση = ΚΑΘΑΡΟΣ αέρας
+// Αυτές οι σταθερές χρησιμοποιούνται πλέον στον νέο αλγόριθμο
 const float GAS_CEILING = 50.0;   // kΩ = Άριστος αέρας (Οροφή)
 const float GAS_FLOOR   = 5.0;    // kΩ = Πολύ κακός αέρας (Δάπεδο)
+// Κρατάμε και τις παλιές αν χρειάζεται για συμβατότητα, αλλά ο υπολογισμός άλλαξε.
+// const float GAS_MIN = 5.0; 
+// const float GAS_MAX = 80.0; 
 
 // ---- BME680 ----
 Adafruit_BME680 bme;
@@ -45,7 +49,8 @@ float calculateAIQ(float gas_kohm, float humidity);
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("Ξεκινάω UNO R4 WiFi + BME680 + Google Script (V3.3 Improved AIQ)...");
+  // Διατηρούμε το μήνυμα όσο πιο κοντά γίνεται στο V3.2, αλλά αλλάζουμε το Version
+  Serial.println("Ξεκινάω UNO R4 WiFi + BME680 + Google Script (αρχική αποστολή + στις :00 και :30)..."); 
 
   // --- BME680 ---
   Wire.begin();
@@ -179,20 +184,14 @@ float calculateAIQ(float gas_kohm, float humidity) {
   } else if (gas_kohm <= GAS_FLOOR) {
     gasScore = 75.0; // Μέγιστο κακό από αέριο
   } else {
-    // Γραμμική παρεμβολή ανάμεσα σε 5k και 50k
-    // Όσο μικραίνει το gas_kohm, μεγαλώνει το score
-    // Ποσοστό ρύπανσης = 1 - (τρέχον - ελάχιστο) / (εύρος) ; Όχι ακριβώς.
-    // Ας πούμε: ratio = (gas - floor) / (ceiling - floor).
     // ratio 0 -> gas=floor -> score 75.
     // ratio 1 -> gas=ceiling -> score 0.
-    // score = (1 - ratio) * 75
     float ratio = (gas_kohm - GAS_FLOOR) / (GAS_CEILING - GAS_FLOOR);
     gasScore = (1.0 - ratio) * 75.0;
   }
 
   // 2. Humidity Score (25% βαρύτητα)
   // Ιδανική υγρασία: 40%. Απόκλιση προσθέτει "πόντους" (χειροτερεύει το AIQ)
-  // Max penalty στις 100% ή 0% -> ας πούμε ότι διαφορά 60% δίνει 25 πόντους.
   float humScore = 0.0;
   float diff = 0.0;
   if (humidity >= 38 && humidity <= 42) {
@@ -233,17 +232,18 @@ void takeMeasurementAndSend() {
   float pressure    = bme.pressure / 100.0;         // hPa
   float gas_kohm    = bme.gas_resistance / 1000.0;  // kΩ
 
-  // ΝΕΟΣ ΥΠΟΛΟΓΙΣΜΟΣ
+  // -------- ΑΛΛΑΓΗ ΕΔΩ: ΝΕΟΣ ΥΠΟΛΟΓΙΣΜΟΣ --------
   float aiq = calculateAIQ(gas_kohm, humidity);
+  // ----------------------------------------------
 
-  // ΕΜΦΑΝΙΣΕ ΜΕΤΡΗΣΕΙΣ στο Serial Monitor
+  // ΕΜΦΑΝΙΣΕ ΜΕΤΡΗΣΕΙΣ στο Serial Monitor (ίδιο format με V3.2 για να μην έχει αλλαγές)
   Serial.println();
-  Serial.println("----- ΝΕΑ ΜΕΤΡΗΣΗ (V3.3) -----");
+  Serial.println("----- ΝΕΑ ΜΕΤΡΗΣΗ -----");
   Serial.print("Θερμοκρασία: "); Serial.print(temperature); Serial.println(" °C");
   Serial.print("Υγρασία:    ");  Serial.print(humidity);    Serial.println(" %");
   Serial.print("Πίεση:      ");  Serial.print(pressure);    Serial.println(" hPa");
   Serial.print("Gas:        ");  Serial.print(gas_kohm);    Serial.println(" kΩ");
-  Serial.print("AIQ (New):  ");  Serial.print(aiq);         Serial.println(" (0=Best, 100=Worst)");
+  Serial.print("AIQ:        ");  Serial.print(aiq);         Serial.println(" (0–100)");
   Serial.println("-----------------------");
 
   // ΣΤΕΙΛΕ στο Google Script
@@ -280,17 +280,14 @@ void sendToGoogle(float temperature, float humidity, float pressure, float gas_k
   }
 
   // Φτιάχνουμε URL με τις παραμέτρους για το write mode
+  // EXACTLY AS IN V3.2
   String url = scriptPath;
   url += "?mode=write";
   url += "&temp=";   url += String(temperature, 2);
   url += "&hum=";    url += String(humidity, 2);
   url += "&press=";  url += String(pressure, 2);
   url += "&gas=";    url += String(gas_kohm, 2);
-
-  // AIQ ως ακέραιος, χωρίς κενά
-  int aiqInt = (int)aiq;   // αν θέλεις, μπορείς να βάλεις (int)round(aiq)
-  url += "&aiq=";
-  url += String(aiqInt);
+  url += "&aiq=";    url += String(aiq, 0);   // AIQ χωρίς δεκαδικά (όπως V3.2)
 
   // DEBUG: εκτύπωση πλήρους URL
   Serial.print("URL που στέλνω: ");
