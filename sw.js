@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vannet-v1';
+const CACHE_NAME = 'vannet-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -49,5 +49,13 @@ self.addEventListener('fetch', (e) => {
     caches.match(e.request).then((response) => {
       return response || fetch(e.request);
     })
+  );
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
   );
 });

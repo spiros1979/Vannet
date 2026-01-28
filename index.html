@@ -84,6 +84,10 @@
       color: inherit !important;
     }
 
+    .card-hidden {
+      display: none !important;
+    }
+
     .counter:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
@@ -325,6 +329,7 @@
             <a class="nav-item" href="presscharts.html"><img src="cloud-sun.svg" alt="Πίεση"
                 title="Γραφήματα ατμοσφαιρικής πίεσης"></a>
             <a class="nav-item" href="aircharts.html"><img src="fan.svg" alt="AIQ" title="Γραφήματα ποιότητας αέρα"></a>
+            <a class="nav-item" href="tank1.html"><img src="tank_1.svg" alt="Δεξαμενή 1" title="Δεξαμενή 1"></a>
             <a class="nav-item" href="tank2.html"><img src="tank_2.svg" alt="Δεξαμενή 2" title="Δεξαμενή 2"></a>
             <a class="nav-item" href="#" id="btn-notify" title="Ενεργοποίηση ειδοποιήσεων">
               <img src="bell.svg" alt="Notifications" id="img-notify" style="opacity: 0.4;">
@@ -342,7 +347,7 @@
 
     <!-- Πάνω σειρά: 4 ίσα κουτιά -->
     <div class="row mb-3">
-      <div class="col-md-3 d-flex">
+      <div class="col-md-3 d-flex index-card top-card" id="card-temp" data-card="showTemp">
         <a href="charts.html" class="counter counter-top w-100" title="Προβολή γραφημάτων θερμοκρασίας">
           <h3 id="temp-title">Θερμοκρασία</h3>
           <canvas id="temperatureChart"></canvas>
@@ -355,7 +360,7 @@
         </a>
       </div>
 
-      <div class="col-md-3 d-flex">
+      <div class="col-md-3 d-flex index-card top-card" id="card-hum" data-card="showHum">
         <a href="humcharts.html" class="counter counter-top w-100" title="Προβολή γραφημάτων υγρασίας">
           <h3 id="hum-title">Υγρασία</h3>
           <canvas id="humidityChart"></canvas>
@@ -368,7 +373,7 @@
         </a>
       </div>
 
-      <div class="col-md-3 d-flex">
+      <div class="col-md-3 d-flex index-card top-card" id="card-press" data-card="showPress">
         <a href="presscharts.html" class="counter counter-top w-100" title="Προβολή γραφημάτων πίεσης">
           <h3 id="press-title">Πίεση</h3>
           <canvas id="pressureChart"></canvas>
@@ -381,7 +386,7 @@
         </a>
       </div>
 
-      <div class="col-md-3 d-flex">
+      <div class="col-md-3 d-flex index-card top-card" id="card-tanks" data-card="showTanks">
         <div class="counter counter-top w-100">
           <h3>Δεξαμενές</h3>
 
@@ -417,7 +422,7 @@
 
     <!-- Κάτω σειρά: AIQ + Καιρός -->
     <div class="row mb-4">
-      <div class="col-md-4 d-flex">
+      <div class="col-md-4 d-flex index-card bottom-card" id="card-aiq" data-card="showAiq">
         <a href="aircharts.html" class="counter w-100" title="Προβολή γραφημάτων ποιότητας αέρα">
           <h3 id="aiq-title">Ποιότητα Αέρα (AIQ)</h3>
           <div id="iaqBar" class="iaq-bar">
@@ -428,7 +433,7 @@
         </a>
       </div>
 
-      <div class="col-md-8 d-flex">
+      <div class="col-md-8 d-flex index-card bottom-card" id="card-weather" data-card="showWeather">
         <a id="weatherLink" class="weather-widget-link w-100" href="https://www.windy.com/" target="_blank"
           rel="noopener">
           <div class="counter weather-widget w-100">
@@ -513,6 +518,90 @@
       if (code === 95) return 'Καταιγίδες';
       if (code === 96 || code === 99) return 'Καταιγίδες με χαλάζι';
       return 'Καιρικά φαινόμενα';
+    }
+
+    function applyIndexCardsFromSettings() {
+      const fallback = {
+        cards: {
+          showTemp: true,
+          showHum: true,
+          showPress: true,
+          showTanks: true,
+          showAiq: true,
+          showWeather: true
+        }
+      };
+
+      let stored = null;
+      try {
+        const raw = localStorage.getItem("vannet_settings_v1");
+        stored = raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        stored = null;
+      }
+      const rawCards = { ...fallback.cards, ...(stored?.cards || {}) };
+      const toBool = (v) => v === true || v === "true" || v === 1 || v === "1";
+      const cards = Object.fromEntries(Object.entries(rawCards).map(([k, v]) => [k, toBool(v)]));
+
+      const map = {
+        showTemp: 'card-temp',
+        showHum: 'card-hum',
+        showPress: 'card-press',
+        showTanks: 'card-tanks',
+        showAiq: 'card-aiq',
+        showWeather: 'card-weather'
+      };
+
+      Object.entries(map).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('card-hidden', !cards[key]);
+      });
+
+      const topIds = ['card-temp', 'card-hum', 'card-press', 'card-tanks'];
+      const topCount = topIds.reduce((count, id) => {
+        const el = document.getElementById(id);
+        if (!el) return count;
+        const key = el.getAttribute('data-card');
+        return count + (cards[key] ? 1 : 0);
+      }, 0);
+      const topClass = topCount <= 1 ? 'col-md-12' : topCount === 2 ? 'col-md-6' : topCount === 3 ? 'col-md-4' : 'col-md-3';
+      const topXsClass =
+        topCount <= 1 ? 'col-12' :
+        topCount === 2 ? 'col-6' :
+        topCount === 3 ? 'col-4' :
+        'col-6';
+      const topSmClass =
+        topCount <= 1 ? 'col-sm-12' :
+        topCount === 2 ? 'col-sm-6' :
+        topCount === 3 ? 'col-sm-4' :
+        'col-sm-6';
+
+      topIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('col-md-12', 'col-md-6', 'col-md-4', 'col-md-3', 'col-sm-12', 'col-sm-6', 'col-sm-4', 'col-12', 'col-6', 'col-4');
+        el.classList.add(topClass, topSmClass, topXsClass);
+      });
+
+      const aiqEl = document.getElementById('card-aiq');
+      const weatherEl = document.getElementById('card-weather');
+      const bottomCount =
+        (cards.showAiq ? 1 : 0) +
+        (cards.showWeather ? 1 : 0);
+      const bottomVisible = [aiqEl, weatherEl].filter(el => el && !el.classList.contains('d-none'));
+
+      [aiqEl, weatherEl].forEach(el => {
+        if (!el) return;
+        el.classList.remove('col-md-12', 'col-md-8', 'col-md-4', 'col-sm-12', 'col-12', 'col-6');
+      });
+
+      if (bottomCount === 2) {
+        if (aiqEl) aiqEl.classList.add('col-md-4', 'col-sm-12', 'col-6');
+        if (weatherEl) weatherEl.classList.add('col-md-8', 'col-sm-12', 'col-6');
+      } else if (bottomCount === 1) {
+        if (bottomVisible[0]) bottomVisible[0].classList.add('col-md-12', 'col-sm-12', 'col-12');
+      }
     }
 
     function initWeatherWidget() {
@@ -644,6 +733,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+      applyIndexCardsFromSettings();
       initWeatherWidget();
 
       fetch('https://script.google.com/macros/s/AKfycbwF74IEhl8fC3evudqC1DGk4jd_r_PBh9_Ay2Pq8JzAf6RryAxLcmG4w7SYCW3nqk15pw/exec?mode=read')
@@ -769,6 +859,13 @@
         })
         .catch(err => console.error('Σφάλμα κατά την ανάκτηση των δεδομένων:', err));
     });
+
+    // Live update όταν αλλάζουν τα settings από άλλο tab/παράθυρο
+    window.addEventListener('storage', (e) => {
+      if (e.key === "vannet_settings_v1") {
+        applyIndexCardsFromSettings();
+      }
+    });
   </script>
   <script>
     // =========================
@@ -780,6 +877,14 @@
 
     // default toggles (αν δεν έχει αποθηκεύσει κάτι ο χρήστης)
     const defaultSettings = {
+      cards: {
+        showTemp: true,
+        showHum: true,
+        showPress: true,
+        showTanks: true,
+        showAiq: true,
+        showWeather: true
+      },
       alerts: {
         temp: { enabled: true, yellow: true, red: true },
         hum: { enabled: true, yellow: true, red: true },
@@ -791,6 +896,8 @@
       limits: {
         temp: { min: 16, max: 28 },
         hum: { min: 30, max: 70 },
+        press: { min: 990, max: 1030 },
+        aiq: { min: 20, max: 60 },
         tank1: { cap: 3000, minPct: 15 },
         tank2: { cap: 500, minPct: 15 }
       }
@@ -806,6 +913,7 @@
         return {
           ...defaultSettings,
           ...parsed,
+          cards: { ...defaultSettings.cards, ...(parsed.cards || {}) },
           alerts: { ...defaultSettings.alerts, ...(parsed.alerts || {}) },
           limits: { ...defaultSettings.limits, ...(parsed.limits || {}) }
         };
@@ -918,16 +1026,23 @@
 
     function levelPress(p) {
       if (!Number.isFinite(p)) return "green";
-      // απλά defaults: κίτρινο έξω από 990–1030, κόκκινο έξω από 970–1050
-      if (p < 970 || p > 1050) return "red";
-      if (p < 990 || p > 1030) return "yellow";
+      const settings = getSettings();
+      const min = settings.limits?.press?.min ?? 990;
+      const max = settings.limits?.press?.max ?? 1030;
+
+      if (p < min || p > max) return "red";
+      if (p < (min + 5) || p > (max - 5)) return "yellow";
       return "green";
     }
 
     function levelAIQ(a) {
       if (!Number.isFinite(a)) return "green";
-      if (a > 100) return "red";
-      if (a > 60) return "yellow";
+      const settings = getSettings();
+      const min = settings.limits?.aiq?.min ?? 20;
+      const max = settings.limits?.aiq?.max ?? 60;
+
+      if (a < min || a > max) return "red";
+      if (a < (min + 10) || a > (max - 10)) return "yellow";
       return "green";
     }
 

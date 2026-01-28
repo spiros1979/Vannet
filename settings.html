@@ -109,7 +109,13 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-6">
-          <div class="banner-title">Ρυθμίσεις</div>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div class="banner-title" style="margin:0;">Ρυθμίσεις</div>
+            <div>
+              <button class="btn btn-primary btn-sm" id="saveAllTop">Αποθήκευση όλων</button>
+              <button class="btn btn-outline-secondary btn-sm" id="resetAllTop" style="margin-left:8px;">Επαναφορά</button>
+            </div>
+          </div>
         </div>
 
         <div class="col-6 text-right">
@@ -174,9 +180,6 @@
           <input type="checkbox" id="showWeather"> Καιρός / Πρόβλεψη
         </label>
 
-        <div class="muted-note">
-          Σημ.: Στο index σου οι δεξαμενές είναι μία κοινή κάρτα (με 2 mini δεξαμενές μέσα).
-        </div>
       </div>
 
       <h2 style="margin-top:24px;">Ειδοποιήσεις (Yellow / Red)</h2>
@@ -228,14 +231,43 @@
       <div class="cardish">
         <h4 style="margin:0 0 10px 0;">Πίεση</h4>
         <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_press_enabled"> Ενεργό</label>
+
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Κάτω (&lt; hPa)</label>
+            <input type="number" id="cfg_press_min" class="form-control form-control-sm" placeholder="990">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Πάνω (&gt; hPa)</label>
+            <input type="number" id="cfg_press_max" class="form-control form-control-sm" placeholder="1030">
+          </div>
+        </div>
+
         <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_press_yellow"> Ειδοποίηση στο
           κίτρινο</label>
         <label style="display:block;"><input type="checkbox" id="al_press_red"> Ειδοποίηση στο κόκκινο</label>
       </div>
 
+      <div style="margin-top:14px;">
+        <button class="btn btn-primary" id="saveAllMid">Αποθήκευση όλων</button>
+        <button class="btn btn-outline-secondary" id="resetAllMid" style="margin-left:8px;">Επαναφορά</button>
+      </div>
+
       <div class="cardish">
         <h4 style="margin:0 0 10px 0;">Ποιότητα Αέρα (AIQ)</h4>
         <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_aiq_enabled"> Ενεργό</label>
+
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Κάτω (&lt;)</label>
+            <input type="number" id="cfg_aiq_min" class="form-control form-control-sm" placeholder="20">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:13px; font-weight:bold;">Alert Πάνω (&gt;)</label>
+            <input type="number" id="cfg_aiq_max" class="form-control form-control-sm" placeholder="60">
+          </div>
+        </div>
+
         <label style="display:block; margin-bottom:8px;"><input type="checkbox" id="al_aiq_yellow"> Ειδοποίηση στο
           κίτρινο</label>
         <label style="display:block;"><input type="checkbox" id="al_aiq_red"> Ειδοποίηση στο κόκκινο</label>
@@ -315,6 +347,8 @@
           limits: {
             temp: { min: 16, max: 28 },
             hum: { min: 30, max: 70 },
+            press: { min: 990, max: 1030 },
+            aiq: { min: 20, max: 60 },
             tank1: { cap: 3000, minPct: 15 },
             tank2: { cap: 500, minPct: 15 }
           }
@@ -389,6 +423,12 @@
           document.getElementById("cfg_hum_min").value = s.limits?.hum?.min ?? 30;
           document.getElementById("cfg_hum_max").value = s.limits?.hum?.max ?? 70;
 
+          document.getElementById("cfg_press_min").value = s.limits?.press?.min ?? 990;
+          document.getElementById("cfg_press_max").value = s.limits?.press?.max ?? 1030;
+
+          document.getElementById("cfg_aiq_min").value = s.limits?.aiq?.min ?? 20;
+          document.getElementById("cfg_aiq_max").value = s.limits?.aiq?.max ?? 60;
+
           document.getElementById("cfg_t1_cap").value = s.limits?.tank1?.cap ?? 3000;
           document.getElementById("cfg_t1_min").value = s.limits?.tank1?.minPct ?? 15;
 
@@ -447,6 +487,14 @@
                 min: Number(document.getElementById("cfg_hum_min").value),
                 max: Number(document.getElementById("cfg_hum_max").value)
               },
+              press: {
+                min: Number(document.getElementById("cfg_press_min").value),
+                max: Number(document.getElementById("cfg_press_max").value)
+              },
+              aiq: {
+                min: Number(document.getElementById("cfg_aiq_min").value),
+                max: Number(document.getElementById("cfg_aiq_max").value)
+              },
               tank1: {
                 cap: Number(document.getElementById("cfg_t1_cap").value),
                 minPct: Number(document.getElementById("cfg_t1_min").value)
@@ -468,16 +516,27 @@
         // init
         applyToUI(loadSettings());
 
-        document.getElementById("saveAll").addEventListener("click", () => {
-          saveSettings(readFromUI());
-          flash("Αποθηκεύτηκε!");
-        });
+        function bindSaveReset(saveId, resetId) {
+          const saveBtn = document.getElementById(saveId);
+          const resetBtn = document.getElementById(resetId);
+          if (saveBtn) {
+            saveBtn.addEventListener("click", () => {
+              saveSettings(readFromUI());
+              flash("Αποθηκεύτηκε!");
+            });
+          }
+          if (resetBtn) {
+            resetBtn.addEventListener("click", () => {
+              saveSettings(structuredClone(defaults));
+              applyToUI(structuredClone(defaults));
+              flash("Επαναφορά!");
+            });
+          }
+        }
 
-        document.getElementById("resetAll").addEventListener("click", () => {
-          saveSettings(structuredClone(defaults));
-          applyToUI(structuredClone(defaults));
-          flash("Επαναφορά!");
-        });
+        bindSaveReset("saveAll", "resetAll");
+        bindSaveReset("saveAllTop", "resetAllTop");
+        bindSaveReset("saveAllMid", "resetAllMid");
       </script>
 
     </div>
